@@ -113,7 +113,7 @@
   </template>
   
   <script setup>
-  import { ref } from 'vue'
+  import { ref, onMounted } from 'vue'
   import { useRouter } from 'vue-router'
   
   const router = useRouter()
@@ -130,6 +130,13 @@
     'Alex': 'Alexandroisking69'
   }
   
+  // Check if user is already logged in
+  onMounted(() => {
+    if (process.client && localStorage.getItem('userAuth')) {
+      router.push('/app/')
+    }
+  })
+  
   const handleLogin = async () => {
     isLoading.value = true
     errorMessage.value = ''
@@ -139,7 +146,17 @@
     
     // Check credentials
     if (validUsers[username.value] && validUsers[username.value] === password.value) {
-      // Successful login
+      // Successful login - set localStorage
+      if (process.client) {
+        const authData = {
+          username: username.value,
+          loginTime: new Date().toISOString(),
+          isAuthenticated: true
+        }
+        localStorage.setItem('userAuth', JSON.stringify(authData))
+      }
+      
+      // Redirect to app
       router.push('/app/')
     } else {
       // Failed login

@@ -290,11 +290,20 @@
           </div>
         </div>
       </div>
+  
+      <!-- LOI Generator Modal -->
+      <LOIGenerator
+        :is-open="showLOIModal"
+        :deal-data="{ inputs, calculations: calculations }"
+        @close="showLOIModal = false"
+      />
     </div>
   </template>
   
   <script setup>
   import { ref, computed } from 'vue'
+
+  const showLOIModal = ref(false)
   
   // Inputs reactive object
   const inputs = ref({
@@ -415,12 +424,7 @@
   
   // Generate LOI function
   const generateLOI = () => {
-    // TODO: Implement LOI generation
-    console.log('Generating LOI with data:', {
-      inputs: inputs.value,
-      calculations: calculations.value
-    })
-    alert('LOI generation functionality will be implemented next!')
+    showLOIModal.value = true
   }
   </script>
   
