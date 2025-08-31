@@ -304,6 +304,8 @@
   import { ref, computed } from 'vue'
 
   const showLOIModal = ref(false)
+
+  const emit = defineEmits(['deal-data-updated'])
   
   // Inputs reactive object
   const inputs = ref({
@@ -421,6 +423,14 @@
     if (num === undefined || num === null) return '0'
     return Math.round(num).toLocaleString()
   }
+  
+  // Watch for changes to emit deal data to parent
+  watch([inputs, calculations], () => {
+    emit('deal-data-updated', {
+      inputs: inputs.value,
+      calculations: calculations.value
+    })
+  }, { deep: true })
   
   // Generate LOI function
   const generateLOI = () => {
