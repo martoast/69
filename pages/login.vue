@@ -127,7 +127,7 @@
   
   // Hard-coded credentials
   const validUsers = {
-    'Alex': 'Alexandroisking69'
+    'mikhail@orbiuscapitalgroup.com': 'Alexandroisking69'
   }
   
   // Check if user is already logged in

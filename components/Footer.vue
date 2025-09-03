@@ -29,7 +29,7 @@
                 6<span class="text-yellow-gold">9</span>
               </h2>
               <span class="text-gray-400 text-sm">
-                © {{ currentYear }} 69 Hustle House. All rights reserved.
+                © {{ currentYear }} HustleHouse. All rights reserved.
               </span>
             </div>
   

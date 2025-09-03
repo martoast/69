@@ -5,9 +5,7 @@
         <div class="flex items-center justify-between lg:hidden">
           <!-- Logo -->
           <div class="flex items-center">
-            <h1 class="text-xl font-bold text-white">
-              Click<span class="text-yellow-gold">&Offer</span>
-            </h1>
+            <img src="/logo.jpeg" class="h-12 w-12"/>
           </div>
           
           <!-- Mobile Menu Button -->
@@ -53,9 +51,7 @@
         <div class="hidden lg:flex items-center justify-between max-w-7xl mx-auto">
           <!-- Logo/Brand -->
           <div class="flex items-center space-x-4">
-            <h1 class="text-2xl font-bold text-white">
-              6<span class="text-yellow-gold">9</span>
-            </h1>
+            <img src="/logo.jpeg" class="h-12 w-12"/>
           </div>
           
           <!-- Desktop User Info & Actions -->
