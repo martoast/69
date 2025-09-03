@@ -611,6 +611,7 @@ const inputs = ref({
   closingFeePercent: 4.0,
   // Hardcoded values
   buyerName: "Mikhail Kravtsov",
+  buyerPhone: "+1 (737) 733-1413",
   llcName: "Orbius Capital Group LLC",
 });
 

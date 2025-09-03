@@ -99,7 +99,7 @@
                   <div class="grid grid-cols-12 gap-4 text-sm mt-2">
                     <div class="col-span-2 font-medium text-gray-700">From:</div>
                     <div class="col-span-10 text-gray-900">
-                      {{ dealData.inputs.agentName || 'Your Name' }} &lt;{{ dealData.inputs.agentEmail || 'your.email@example.com' }}&gt;
+                      {{ dealData.inputs.buyerName || 'Your Name' }} &lt;{{ dealData.inputs.agentEmail || 'your.email@example.com' }}&gt;
                     </div>
                   </div>
                   <div class="grid grid-cols-12 gap-4 text-sm mt-2">
@@ -116,12 +116,12 @@
                 <!-- Email Signature -->
                 <div class="border-t bg-gray-50 p-4">
                   <div class="text-sm text-gray-600">
-                    <div class="font-medium">{{ dealData.inputs.agentName || 'Your Name' }}</div>
+                    <div class="font-medium">{{ dealData.inputs.buyerName || 'Your Name' }}</div>
                     <div>Orbius Capital Group LLC</div>
                     <div class="mt-1">
-                      <span v-if="dealData.inputs.agentPhone">Phone: {{ dealData.inputs.agentPhone }}</span>
-                      <span v-if="dealData.inputs.agentPhone && dealData.inputs.agentEmail"> | </span>
-                      <span v-if="dealData.inputs.agentEmail">Email: {{ dealData.inputs.agentEmail }}</span>
+                      <span v-if="dealData.inputs.buyerPhone">Phone: {{ dealData.inputs.buyerPhone }}</span>
+                      <span v-if="dealData.inputs.buyerPhone && dealData.inputs.buyerEmail"> | </span>
+                      <span v-if="dealData.inputs.buyerEmail">Email: {{ dealData.inputs.buyerEmail }}</span>
                     </div>
                   </div>
                 </div>
@@ -183,7 +183,7 @@
     
     return `Hello ${inputs.sellerName || '[Owner/Agent Name]'},
 
-My name is ${inputs.agentName || '[Your Name]'} with Orbius Capital Group LLC. We are actively acquiring commercial real estate on behalf of a private equity group and are currently seeking properties that can be purchased with owner financing.
+My name is ${inputs.buyerName || '[Your Name]'} with Orbius Capital Group LLC. We are actively acquiring commercial real estate on behalf of a private equity group and are currently seeking properties that can be purchased with owner financing.
 
 If you have any listings or off-market opportunities that meet this criteria, I'd be glad to review them and present an offer. We typically structure straightforward transactions where:
 
@@ -195,7 +195,7 @@ Please feel free to reply with details on any available properties, or let me kn
 
 Looking forward to connecting,
 
-${inputs.agentName || '[Your Name]'}`
+${inputs.buyerName || '[Your Name]'}`
   }
   
   // Format subject with deal data
@@ -204,8 +204,8 @@ ${inputs.agentName || '[Your Name]'}`
     const { inputs } = props.dealData
     
     return subject
-      .replace(/\[Your Name\]/g, inputs.agentName || '[Your Name]')
-      .replace(/\{Your Name\}/g, inputs.agentName || '[Your Name]')
+      .replace(/\[Your Name\]/g, inputs.buyerName || '[Your Name]')
+      .replace(/\{Your Name\}/g, inputs.buyerName || '[Your Name]')
   })
   
   // Format content with deal data
@@ -218,9 +218,9 @@ ${inputs.agentName || '[Your Name]'}`
     // Replace placeholders with actual data
     return content
       .replace(/\[Owner\/Agent Name\]/g, inputs.sellerName || '[Owner/Agent Name]')
-      .replace(/\[Your Name\]/g, inputs.agentName || '[Your Name]')
-      .replace(/\{Your Name\}/g, inputs.agentName || '[Your Name]')
-      .replace(/\{phone\}/g, inputs.agentPhone || '[Your Phone]')
+      .replace(/\[Your Name\]/g, inputs.buyerName || '[Your Name]')
+      .replace(/\{Your Name\}/g, inputs.buyerName || '[Your Name]')
+      .replace(/\{phone\}/g, inputs.buyerPhone || '[Your Phone]')
       .replace(/\{email\}/g, inputs.agentEmail || '[Your Email]')
   })
   
