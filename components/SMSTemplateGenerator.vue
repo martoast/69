@@ -104,9 +104,7 @@
                   <div class="text-sm text-gray-600">
                     {{ formattedContent.length }} characters
                   </div>
-                  <div class="text-xs text-gray-400">
-                    {{ formattedContent.length > 160 ? `~${Math.ceil(formattedContent.length / 160)} SMS messages` : '1 SMS message' }}
-                  </div>
+                  
                 </div>
               </div>
             </div>

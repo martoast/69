@@ -48,7 +48,7 @@
                   v-model="inputs.agentName"
                   type="text"
                   class="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-yellow-gold focus:border-transparent"
-                  placeholder="Your full name"
+                  placeholder="Agent's full name"
                 />
               </div>
               <div>
@@ -455,7 +455,7 @@
               <h4
                 class="text-sm font-medium text-gray-300 uppercase tracking-wide"
               >
-                Create Templates
+                Create Documents
               </h4>
 
               <div class="grid grid-cols-1 gap-3">
@@ -463,10 +463,10 @@
                 <button
                   @click="generateLOI"
                   :disabled="!isFormValid"
-                  class="group relative w-full px-6 py-4 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white font-semibold text-lg rounded-xl transition-all duration-300 transform hover:-translate-y-0.5 hover:shadow-lg disabled:hover:transform-none overflow-hidden"
+                  class="group relative w-full px-6 py-4 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white font-semibold text-lg rounded-xl transition-all duration-300 transform hover:-translate-y-0.5 hover:shadow-lg disabled:hover:transform-none overflow-hidden"
                 >
                   <div
-                    class="absolute inset-0 bg-gradient-to-r from-blue-400 to-blue-500 opacity-0 group-hover:opacity-20 transition-opacity duration-300"
+                    class="absolute inset-0 bg-gradient-to-r from-indigo-400 to-indigo-500 opacity-0 group-hover:opacity-20 transition-opacity duration-300"
                   ></div>
                   <div
                     class="relative flex items-center justify-center space-x-2"
@@ -492,10 +492,10 @@
                 <button
                   @click="generateSMSTemplate"
                   :disabled="!isFormValid"
-                  class="group relative w-full px-6 py-4 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white font-semibold text-lg rounded-xl transition-all duration-300 transform hover:-translate-y-0.5 hover:shadow-lg disabled:hover:transform-none overflow-hidden"
+                  class="group relative w-full px-6 py-4 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-600 hover:to-green-600 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white font-semibold text-lg rounded-xl transition-all duration-300 transform hover:-translate-y-0.5 hover:shadow-lg disabled:hover:transform-none overflow-hidden"
                 >
                   <div
-                    class="absolute inset-0 bg-gradient-to-r from-green-400 to-green-500 opacity-0 group-hover:opacity-20 transition-opacity duration-300"
+                    class="absolute inset-0 bg-gradient-to-r from-green-400 to-green-300 opacity-0 group-hover:opacity-20 transition-opacity duration-300"
                   ></div>
                   <div
                     class="relative flex items-center justify-center space-x-2"
@@ -521,10 +521,10 @@
                 <button
                   @click="generateEmailTemplate"
                   :disabled="!isFormValid"
-                  class="group relative w-full px-6 py-4 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white font-semibold text-lg rounded-xl transition-all duration-300 transform hover:-translate-y-0.5 hover:shadow-lg disabled:hover:transform-none overflow-hidden"
+                  class="group relative w-full px-6 py-4 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white font-semibold text-lg rounded-xl transition-all duration-300 transform hover:-translate-y-0.5 hover:shadow-lg disabled:hover:transform-none overflow-hidden"
                 >
                   <div
-                    class="absolute inset-0 bg-gradient-to-r from-purple-400 to-purple-500 opacity-0 group-hover:opacity-20 transition-opacity duration-300"
+                    class="absolute inset-0 bg-gradient-to-r from-blue-400 to-blue-500 opacity-0 group-hover:opacity-20 transition-opacity duration-300"
                   ></div>
                   <div
                     class="relative flex items-center justify-center space-x-2"

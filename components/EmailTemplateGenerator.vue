@@ -91,7 +91,7 @@
               <!-- Email Mockup -->
               <div class="max-w-4xl mx-auto bg-white border rounded-lg shadow-sm">
                 <!-- Email Header -->
-                <div class="border-b bg-gray-50 p-4">
+                <!-- <div class="border-b bg-gray-50 p-4">
                   <div class="grid grid-cols-12 gap-4 text-sm">
                     <div class="col-span-2 font-medium text-gray-700">Subject:</div>
                     <div class="col-span-10 font-medium text-gray-900">{{ formattedSubject }}</div>
@@ -104,9 +104,9 @@
                   </div>
                   <div class="grid grid-cols-12 gap-4 text-sm mt-2">
                     <div class="col-span-2 font-medium text-gray-700">To:</div>
-                    <div class="col-span-10 text-gray-900">[Owner/Agent Name] &lt;recipient@example.com&gt;</div>
+                    <div class="col-span-10 text-gray-900">{{ dealData.inputs.sellerName || '[Owner/Agent Name]' }} &lt;recipient@example.com&gt;</div>
                   </div>
-                </div>
+                </div> -->
                 
                 <!-- Email Body -->
                 <div class="p-6">
@@ -181,7 +181,7 @@
   const generateEmailTemplate = () => {
     const { inputs } = props.dealData
     
-    return `Hello [Owner/Agent Name],
+    return `Hello ${inputs.sellerName || '[Owner/Agent Name]'},
 
 My name is ${inputs.agentName || '[Your Name]'} with Orbius Capital Group LLC. We are actively acquiring commercial real estate on behalf of a private equity group and are currently seeking properties that can be purchased with owner financing.
 
@@ -217,6 +217,7 @@ ${inputs.agentName || '[Your Name]'}`
     
     // Replace placeholders with actual data
     return content
+      .replace(/\[Owner\/Agent Name\]/g, inputs.sellerName || '[Owner/Agent Name]')
       .replace(/\[Your Name\]/g, inputs.agentName || '[Your Name]')
       .replace(/\{Your Name\}/g, inputs.agentName || '[Your Name]')
       .replace(/\{phone\}/g, inputs.agentPhone || '[Your Phone]')
