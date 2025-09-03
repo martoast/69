@@ -14,11 +14,37 @@
       ></div>
 
       <!-- Modal Content -->
-      <div class="relative w-full max-w-5xl h-[90vh] bg-white rounded-2xl shadow-2xl flex flex-col">
+      <div class="relative w-full max-w-6xl h-[95vh] bg-white rounded-2xl shadow-2xl flex flex-col">
         <!-- Header -->
         <div class="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 class="text-2xl font-bold text-gray-900">Letter of Intent</h2>
+          <h2 class="text-2xl font-bold text-gray-900">Letter of Intent Generator</h2>
           <div class="flex items-center space-x-3">
+            <!-- Template Selection -->
+            <div class="flex bg-gray-100 rounded-lg p-1">
+              <button
+                @click="selectedTemplate = 'seller-financing'"
+                :class="[
+                  'px-4 py-2 text-sm font-medium rounded-md transition-all duration-200',
+                  selectedTemplate === 'seller-financing' 
+                    ? 'bg-white text-gray-900 shadow-sm' 
+                    : 'text-gray-600 hover:text-gray-900'
+                ]"
+              >
+                Seller Financing
+              </button>
+              <button
+                @click="selectedTemplate = 'preferred-equity'"
+                :class="[
+                  'px-4 py-2 text-sm font-medium rounded-md transition-all duration-200',
+                  selectedTemplate === 'preferred-equity' 
+                    ? 'bg-white text-gray-900 shadow-sm' 
+                    : 'text-gray-600 hover:text-gray-900'
+                ]"
+              >
+                Preferred Equity
+              </button>
+            </div>
+
             <!-- Edit Mode Toggle -->
             <button
               @click="toggleEditMode"
@@ -88,6 +114,7 @@ const props = defineProps({
 const emit = defineEmits(['close'])
 
 // Component state
+const selectedTemplate = ref('seller-financing')
 const isEditMode = ref(false)
 const editableContent = ref('')
 
@@ -124,8 +151,8 @@ const formatCurrency = (amount) => {
   }).format(amount)
 }
 
-// Generate plain text LOI content
-const generatePlainTextLOI = () => {
+// Generate Seller Financing LOI (existing template)
+const generateSellerFinancingLOI = () => {
   const { inputs, calculations } = props.dealData
   
   return `Letter of Intent to Purchase:
@@ -213,6 +240,146 @@ Agent Email: ${inputs.agentEmail}
 Agent Phone: ${inputs.agentPhone}`
 }
 
+// Generate Preferred Equity LOI (new template)
+const generatePreferredEquityLOI = () => {
+  const { inputs, calculations } = props.dealData
+  
+  return `ORBIUS CAPITAL GROUP LLC
+PREFERRED EQUITY AGREEMENT
+
+Date: ${getCurrentDate()}
+To: ${inputs.sellerName || 'Property Owner'}
+From: ${inputs.llcName || 'Orbius Capital Group LLC'}
+Property Address: ${inputs.propertyAddress}
+
+Dear ${inputs.sellerName || 'Property Owner'},
+
+${inputs.llcName || 'Orbius Capital Group LLC'} ("Investor") is pleased to present this Letter of Intent for a preferred equity investment opportunity regarding the commercial real estate property located at ${inputs.propertyAddress} ("Property").
+
+INVESTMENT STRUCTURE OVERVIEW
+
+This preferred equity structure allows you to retain ownership and operational control of your property while accessing immediate capital for your business needs. Unlike traditional debt financing, this arrangement provides you with a strategic partnership that aligns our interests with your long-term success.
+
+PROPOSED INVESTMENT TERMS
+
+1. INVESTMENT AMOUNT & STRUCTURE
+• Total Investment: ${formatCurrency(inputs.purchasePrice * 0.8)} (80% of property value)
+• Property Valuation: ${formatCurrency(inputs.purchasePrice)}
+• Investment Type: Preferred Equity Position
+• Your Retained Ownership: 20% Common Equity
+
+2. PREFERRED RETURN STRUCTURE
+• Preferred Return Rate: ${inputs.sellerFinanceRate}% annually
+• Payment Frequency: Monthly payments of ${formatCurrency((inputs.purchasePrice * 0.8 * inputs.sellerFinanceRate / 100) / 12)}
+• Payment Priority: Preferred returns paid before any common distributions
+
+3. TERM & EXIT PROVISIONS
+• Initial Term: ${inputs.balloonYears} years
+• Extension Options: Available upon mutual agreement
+• Buyout Option: You may repurchase our preferred position at any time without penalty
+• Refinance Rights: Our consent required for any refinancing or additional debt
+
+4. PROPERTY MANAGEMENT & CONTROL
+• Operational Control: You retain full management and operational control
+• Major Decisions: Investor approval required for:
+  - Sale of the property
+  - Refinancing above 75% LTV
+  - Major capital improvements exceeding $50,000
+• Monthly Reporting: Basic financial reporting required
+
+5. CASH FLOW DISTRIBUTION WATERFALL
+• 1st Priority: Operating expenses and debt service
+• 2nd Priority: Preferred return to Investor (${inputs.sellerFinanceRate}% annually)
+• 3rd Priority: Remaining cash flow to you as property owner
+
+6. INVESTOR PROTECTIONS
+• Lien Position: Our investment secured by property deed of trust
+• Insurance Requirements: Comprehensive property insurance naming Investor as additional insured
+• Reserve Requirements: Minimum 3-month operating expense reserve
+• Financial Covenants: Maintain property NOI above ${formatCurrency(calculations.monthlyNOI * 12)}
+
+7. YOUR BENEFITS
+• Immediate Capital: Access ${formatCurrency(inputs.purchasePrice * 0.8)} in funds
+• Retained Control: You continue to own and operate the property
+• Tax Advantages: Structure may provide favorable tax treatment
+• No Personal Guarantees: Investment secured solely by property
+• Flexible Exit: Multiple options for buyout or refinance
+
+8. CLOSING TIMELINE & CONDITIONS
+• Due Diligence Period: 15 business days from executed LOI
+• Closing Timeline: 30 days following due diligence completion
+• Title & Escrow: Professional title company to handle all documentation
+• All Costs: Investor covers all closing costs and legal fees
+
+9. DUE DILIGENCE REQUIREMENTS
+We will need to review:
+• Last 24 months of property financial statements
+• Current rent roll and all lease agreements
+• Property management agreements and vendor contracts
+• Insurance policies and claims history
+• Recent property appraisal or BPO
+• Environmental and property condition reports
+
+CONDITIONS PRECEDENT
+• Satisfactory completion of due diligence
+• Clear and marketable title
+• All licenses and permits current and transferable
+• Property insurance in place and adequate
+• No material adverse changes to property condition or tenancy
+
+MUTUAL BENEFITS
+This preferred equity structure provides you with immediate capital while allowing you to retain ownership and control. For us, it provides a secured investment with predictable returns backed by quality real estate.
+
+CONFIDENTIALITY & EXCLUSIVITY
+The terms of this LOI are confidential. We request a 7-day exclusivity period to complete our due diligence and finalize documentation.
+
+NEXT STEPS
+Upon your acceptance of these terms, we will:
+1. Execute a formal Preferred Equity Agreement
+2. Begin due diligence process immediately
+3. Coordinate with title company for closing
+4. Fund the investment within 30 days
+
+We believe this structure provides the optimal solution for your capital needs while preserving your ownership position. We look forward to discussing this opportunity further.
+
+Sincerely,
+
+${inputs.buyerName || 'Mikhail Kravtsov'}
+Managing Member
+${inputs.llcName || 'Orbius Capital Group LLC'}
+Phone: ${inputs.buyerPhone || '(737) 733-1413'}
+Email: ${inputs.agentEmail || 'contact@orbiuscapital.com'}
+
+ACCEPTANCE
+
+I/We have reviewed and accept the terms outlined in this Letter of Intent for preferred equity investment.
+
+Property Owner: ${inputs.sellerName || '_________________________'}
+
+Signature: ___________________________________ Date: ___________
+
+Print Name: __________________________________
+
+Title: _______________________________________
+
+Investor: ${inputs.llcName || 'Orbius Capital Group LLC'}
+
+Signature: ___________________________________ Date: ${getCurrentDate()}
+
+Print Name: ${inputs.buyerName || 'Mikhail Kravtsov'}
+
+Title: Managing Member`
+}
+
+// Generate plain text LOI based on selected template
+const generatePlainTextLOI = () => {
+  if (selectedTemplate.value === 'preferred-equity') {
+    return generatePreferredEquityLOI()
+  } else {
+    return generateSellerFinancingLOI()
+  }
+}
+
 // Generate formatted HTML content
 const formattedContent = computed(() => {
   if (isEditMode.value) return ''
@@ -273,12 +440,13 @@ const formattedContent = computed(() => {
 const printLOI = () => {
   const printWindow = window.open('', '_blank')
   const content = document.getElementById('loi-content').outerHTML
+  const templateType = selectedTemplate.value === 'preferred-equity' ? 'Preferred Equity Agreement' : 'Letter of Intent'
   
   printWindow.document.write(`
     <!DOCTYPE html>
     <html>
       <head>
-        <title>Letter of Intent - ${props.dealData.inputs.propertyAddress}</title>
+        <title>${templateType} - ${props.dealData.inputs.propertyAddress}</title>
         <style>
           @page { 
             margin: 0.5in; 
@@ -327,11 +495,19 @@ const printLOI = () => {
   }, 250)
 }
 
+// Watch for template changes to update content
+watch(selectedTemplate, () => {
+  if (!isEditMode.value) {
+    editableContent.value = generatePlainTextLOI()
+  }
+})
+
 // Initialize content when modal opens
 watch(() => props.isOpen, (newValue) => {
   if (newValue) {
     editableContent.value = generatePlainTextLOI()
     isEditMode.value = false
+    selectedTemplate.value = 'seller-financing' // Default to seller financing
   }
 })
 </script>

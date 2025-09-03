@@ -94,11 +94,10 @@
                 >Buyer Name</label
               >
               <input
-                value="Mikhail Kravtsov"
+                v-model="inputs.buyerName"
                 type="text"
-                class="w-full px-4 py-3 bg-gray-700/50 border border-gray-600 rounded-lg text-gray-400 cursor-not-allowed"
-                readonly
-                disabled
+                class="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-yellow-gold focus:border-transparent"
+                placeholder="Enter buyer name"
               />
             </div>
 
@@ -609,7 +608,7 @@ const inputs = ref({
   balloonYears: 7,
   paymentType: "Interest Only",
   closingFeePercent: 4.0,
-  // Hardcoded values
+  // Now editable buyer name
   buyerName: "Mikhail Kravtsov",
   buyerPhone: "+1 (737) 733-1413",
   llcName: "Orbius Capital Group LLC",
