@@ -5,9 +5,7 @@
         @click="openChat"
         class="bg-yellow-gold hover:bg-yellow-300 text-black p-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-1"
       >
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
-        </svg>
+        <img src="/ai-logo.png" class="h-10 w-10"/>
       </button>
     </div>
   
@@ -28,12 +26,8 @@
           <!-- Chat Header -->
           <div class="bg-gray-800 p-4 rounded-t-lg border-b border-gray-700 flex items-center justify-between">
             <div class="flex items-center space-x-3">
-              <div class="w-8 h-8 bg-yellow-gold rounded-full flex items-center justify-center">
-                <svg class="w-4 h-4 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-              </div>
-              <h3 class="text-lg font-medium text-white">Deal AI Assistant</h3>
+              <img src="/ai-logo.png" class="h-6 w-6"/>
+              <h3 class="text-lg font-medium text-white">69 AI Assistant</h3>
             </div>
             <button 
               @click="closeChat" 
@@ -52,9 +46,7 @@
           >
             <!-- Welcome Message -->
             <div v-if="messages.length === 0" class="text-center text-gray-400 py-8">
-              <svg class="h-12 w-12 mx-auto mb-3 text-yellow-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
-              </svg>
+              <img src="/ai-logo.png" class="h-12 w-12 mx-auto"/>
               <p class="font-medium mb-2">Ask me about your deal</p>
               <p class="text-sm mb-4">I can help analyze the financials, suggest improvements, or answer questions about the property.</p>
               
