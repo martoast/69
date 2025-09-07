@@ -5,7 +5,7 @@
         @click="openChat"
         class="bg-yellow-gold hover:bg-yellow-300 text-black p-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-1"
       >
-        <img src="/ai-logo.png" class="h-10 w-10"/>
+        <img src="/ai-logo.PNG" class="h-10 w-10"/>
       </button>
     </div>
   
@@ -26,7 +26,7 @@
           <!-- Chat Header -->
           <div class="bg-gray-800 p-4 rounded-t-lg border-b border-gray-700 flex items-center justify-between">
             <div class="flex items-center space-x-3">
-              <img src="/ai-logo.png" class="h-6 w-6"/>
+              <img src="/ai-logo.PNG" class="h-6 w-6"/>
               <h3 class="text-lg font-medium text-white">69 AI Assistant</h3>
             </div>
             <button 
@@ -46,7 +46,7 @@
           >
             <!-- Welcome Message -->
             <div v-if="messages.length === 0" class="text-center text-gray-400 py-8">
-              <img src="/ai-logo.png" class="h-12 w-12 mx-auto"/>
+              <img src="/ai-logo.PNG" class="h-12 w-12 mx-auto"/>
               <p class="font-medium mb-2">Ask me about your deal</p>
               <p class="text-sm mb-4">I can help analyze the financials, suggest improvements, or answer questions about the property.</p>
               
