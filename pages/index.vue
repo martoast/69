@@ -10,4 +10,5 @@
   import Hero from '~/components/Hero.vue'
   import AboutServices from '~/components/AboutServices.vue'
   import Footer from '~/components/Footer.vue'
+  
   </script>
