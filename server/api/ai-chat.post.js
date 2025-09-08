@@ -71,7 +71,9 @@ When analyzing documents:
 - Suggest negotiation strategies
 - Provide specific recommendations based on the numbers
 
-Be specific, actionable, and focus on helping users close profitable deals.`
+Be specific, actionable, and focus on helping users close profitable deals.
+
+IMPORTANT: When a user uploads a scanned PDF (detected when text extraction fails), explain that their PDF is a scanned image document, not a text PDF, and provide friendly instructions to screenshot and upload as images instead.`
 
     // Build messages based on content type
     let apiMessages = []
@@ -148,31 +150,31 @@ Be specific, actionable, and focus on helping users close profitable deals.`
               console.log(`PDF Text Length: ${fullText.length} characters`)
               console.log('PDF Text Preview:', fullText.substring(0, 500))
               
-              userContent += `\n\n=== PDF Document: ${file.name} ===\n`
-              userContent += `Total Pages: ${numPages}\n`
-              
-              if (fullText.trim().length > 50) {
+              if (fullText.trim().length > 200) {
+                // We have enough text, it's a real text PDF
+                userContent += `\n\n=== PDF Document: ${file.name} ===\n`
+                userContent += `Total Pages: ${numPages}\n`
                 userContent += `\n--- Extracted Content ---\n`
                 userContent += fullText
                 userContent += `\n--- End of ${file.name} ---\n`
               } else {
-                // If still no text, it's probably a scanned PDF
+                // This is a scanned PDF - tell the AI to explain it to the user
                 console.log('PDF appears to be scanned or image-based')
-                userContent += `\n[WARNING: This PDF appears to be a scanned document or contains only images.]\n`
-                userContent += `[No readable text could be extracted from the ${numPages} pages.]\n`
-                userContent += `[For scanned documents, please:\n`
-                userContent += `  1. Convert the PDF pages to images and upload them, OR\n`
-                userContent += `  2. Use OCR software to extract the text first, OR\n`
-                userContent += `  3. Manually describe the key points from the document]\n`
+                userContent = `The user uploaded a PDF file "${file.name}" with ${numPages} pages, but it's a SCANNED PDF (image-based, not text-based). Only ${fullText.trim().length} characters could be extracted, which means it's essentially photos of documents rather than actual text.
+
+Please explain to the user that:
+1. Their PDF is a scanned document (like a photo of paper)
+2. That's why you can't read it directly
+3. The simple solution is to take screenshots of the PDF pages and upload those as images
+4. You'll be able to analyze everything perfectly once they upload screenshots
+
+Be friendly and helpful about this!`
               }
               
             } catch (error) {
               console.error('Error processing PDF:', error)
-              userContent += `\n\n[Error extracting text from PDF "${file.name}": ${error.message}]\n`
-              
-              // If pdfjs fails, it's likely an image PDF - suggest converting to images
-              userContent += `[This appears to be a scanned or image-based PDF.]\n`
-              userContent += `[Please convert it to images for analysis with GPT-4 Vision.]\n`
+              userContent += `\n\n[Error processing PDF "${file.name}": ${error.message}]\n`
+              userContent += `The PDF couldn't be processed. Suggest to the user to try uploading screenshots of the PDF pages instead.\n`
             }
             
           } else if (file.type === 'text/csv' || file.name.endsWith('.csv')) {
