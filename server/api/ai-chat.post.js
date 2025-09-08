@@ -1,3 +1,4 @@
+// server/api/ai-chat.post.js
 import { OpenAI } from 'openai'
 
 export default defineEventHandler(async (event) => {
@@ -26,7 +27,7 @@ export default defineEventHandler(async (event) => {
 
     // Parse the request body
     const body = await readBody(event)
-    const { messages, property } = body
+    const { messages, property, files } = body
 
     // Get the last user message
     const lastUserMessage = messages.findLast(m => m.role === 'user')
@@ -38,31 +39,137 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    // For now, let's use a simple chat completion instead of assistants
-    // This will work immediately and we can upgrade to assistants later
+    // Create property context
     const propertyContext = createPropertyContext(property)
     
-    // Console log the property context for debugging in production
-    console.log('=== AI CHAT PROPERTY CONTEXT ===')
+    // Console log for debugging
+    console.log('=== AI CHAT REQUEST ===')
     console.log('User Question:', lastUserMessage.content)
-    console.log('Property Data Being Sent to AI:')
-    console.log(propertyContext)
-    console.log('=== END PROPERTY CONTEXT ===')
+    if (files && files.length > 0) {
+      console.log('Files attached:', files.length)
+      files.forEach(f => {
+        console.log(`- ${f.name} (${f.type})`)
+      })
+    }
+    console.log('=== END REQUEST ===')
     
-    const systemMessage = `You are a real estate investment advisor. Help analyze deals and answer questions about properties. Here is the current property data:
+    // Prepare system message
+    const systemMessage = `You are a real estate investment advisor. Help analyze deals and answer questions about properties.
 
+Current property data:
 ${propertyContext}
 
-Provide helpful, actionable advice about real estate investments. Be specific about the numbers and calculations shown above.`
+Be specific about numbers and calculations when relevant.`
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
-      messages: [
+    // Check if we have images
+    const hasImages = files && files.some(f => f.type.startsWith('image/'))
+    
+    // Choose the appropriate model and prepare messages
+    let apiMessages = []
+    let model = "gpt-3.5-turbo" // Default model
+    
+    if (hasImages) {
+      // Use GPT-4o for vision capabilities
+      model = "gpt-4o" // or "gpt-4-turbo" if you have access
+      
+      // Build the content array for vision model
+      const contentArray = [
+        {
+          type: "text",
+          text: lastUserMessage.content || "Please analyze the attached images and relate them to the real estate deal."
+        }
+      ]
+      
+      // Add each image
+      files.forEach(file => {
+        if (file.type.startsWith('image/')) {
+          contentArray.push({
+            type: "image_url",
+            image_url: {
+              url: file.content, // This should be the base64 data URL
+              detail: "high" // Can be "low", "high", or "auto"
+            }
+          })
+        }
+      })
+      
+      // For text files, add their content as text
+      files.forEach(file => {
+        if (file.type === 'text/plain' || file.type.includes('text')) {
+          try {
+            const base64Data = file.content.split(',')[1]
+            const textContent = Buffer.from(base64Data, 'base64').toString('utf-8')
+            contentArray.push({
+              type: "text",
+              text: `\nContent of ${file.name}:\n${textContent}`
+            })
+          } catch (error) {
+            console.error('Error processing text file:', error)
+          }
+        } else if (file.type === 'application/pdf') {
+          // Add a note about PDF
+          contentArray.push({
+            type: "text",
+            text: `\n[Note: PDF file "${file.name}" was uploaded. For full PDF analysis, consider using a PDF extraction service or copy the text content.]`
+          })
+        }
+      })
+      
+      apiMessages = [
         { role: "system", content: systemMessage },
-        ...messages.filter(m => m.role === 'user').slice(-5), // Last 5 user messages for context
-        { role: "user", content: lastUserMessage.content }
-      ],
-      max_tokens: 1000,
+        { role: "user", content: contentArray }
+      ]
+      
+    } else {
+      // No images - use standard text format
+      let userContent = lastUserMessage.content || "Please help me analyze this deal."
+      
+      // Process any text files
+      if (files && files.length > 0) {
+        files.forEach(file => {
+          if (file.type === 'text/plain' || file.type.includes('text')) {
+            try {
+              const base64Data = file.content.split(',')[1]
+              const textContent = Buffer.from(base64Data, 'base64').toString('utf-8')
+              userContent += `\n\nContent of ${file.name}:\n${textContent}`
+            } catch (error) {
+              console.error('Error processing text file:', error)
+            }
+          } else if (file.type === 'application/pdf') {
+            userContent += `\n\n[Note: PDF file "${file.name}" was uploaded. For analysis, please copy and paste the relevant text content.]`
+          }
+        })
+      }
+      
+      // Add context from previous messages (last 3 exchanges)
+      apiMessages = [
+        { role: "system", content: systemMessage }
+      ]
+      
+      const previousMessages = messages.slice(-7, -1)
+      previousMessages.forEach(msg => {
+        if (msg.role === 'user' || msg.role === 'assistant') {
+          apiMessages.push({
+            role: msg.role,
+            content: msg.content
+          })
+        }
+      })
+      
+      apiMessages.push({
+        role: "user",
+        content: userContent
+      })
+    }
+    
+    console.log(`Using model: ${model}`)
+    console.log(`Number of messages: ${apiMessages.length}`)
+    
+    // Make the API call
+    const completion = await openai.chat.completions.create({
+      model: model,
+      messages: apiMessages,
+      max_tokens: hasImages ? 4096 : 2000,
       temperature: 0.7
     })
 
@@ -77,52 +184,83 @@ Provide helpful, actionable advice about real estate investments. Be specific ab
   } catch (error) {
     console.error("AI Chat API Error:", error)
     
+    if (error.response) {
+      console.error("OpenAI API Response:", error.response.status)
+      console.error("Error details:", error.response.data)
+      
+      // Check for specific errors
+      const errorMessage = error.response.data?.error?.message || ""
+      
+      if (errorMessage.includes("model") || error.response.status === 404) {
+        // Model not available - fallback to basic model
+        console.log("Model not available, falling back to gpt-3.5-turbo...")
+        
+        // Retry with basic model
+        try {
+          const config = useRuntimeConfig()
+          const openai = new OpenAI({ apiKey: config.openaiApiKey })
+          const body = await readBody(event)
+          const { messages, property } = body
+          const lastUserMessage = messages.findLast(m => m.role === 'user')
+          
+          const fallbackMessages = [
+            { 
+              role: "system", 
+              content: `You are a real estate investment advisor. ${createPropertyContext(property)}`
+            },
+            { 
+              role: "user", 
+              content: lastUserMessage.content + "\n\n[Note: File uploads are not supported with the current model. Please describe the content you'd like analyzed.]"
+            }
+          ]
+          
+          const completion = await openai.chat.completions.create({
+            model: "gpt-3.5-turbo",
+            messages: fallbackMessages,
+            max_tokens: 2000,
+            temperature: 0.7
+          })
+          
+          return {
+            status: "success",
+            message: {
+              role: "assistant",
+              content: completion.choices[0].message.content + "\n\n[Note: Image analysis requires GPT-4 Vision capabilities. Please ensure you have access to gpt-4o or gpt-4-turbo models.]",
+            }
+          }
+        } catch (fallbackError) {
+          console.error("Fallback also failed:", fallbackError)
+        }
+      }
+    }
+    
     throw createError({
       statusCode: 500,
-      statusMessage: error.message || "Failed to get a response from the AI"
+      statusMessage: "Failed to process your request. Please try again or contact support if the issue persists."
     })
   }
 })
 
 // Helper function to format property information
 function createPropertyContext(property) {
-  if (!property) return "No property information available."
+  if (!property || !property.inputs) return ""
   
   const inputs = property.inputs || {}
   const calculations = property.calculations || {}
   
+  const formatCurrency = (amount) => {
+    if (!amount || isNaN(amount)) return 'Not provided'
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(amount)
+  }
+  
   return `
-    PROPERTY ANALYSIS:
-    =================
-    Address: ${inputs.propertyAddress || 'Unknown'}
-    Purchase Price: ${inputs.purchasePrice || 'Unknown'}
-    Gross Monthly Rent: ${inputs.grossMonthlyRent || 'Unknown'}
-    Monthly Expenses: ${inputs.monthlyExpenses || 'Unknown'}
-    
-    FINANCING DETAILS:
-    =================
-    DSCR Interest Rate: ${inputs.dscrInterestRate || 'Unknown'}%
-    DSCR LTV: ${inputs.dscrLTV || 'Unknown'}%
-    Seller Finance Rate: ${inputs.sellerFinanceRate || 'Unknown'}%
-    Down Payment to Seller: ${inputs.downPaymentToSeller || 'Unknown'}
-    Payment Type: ${inputs.paymentType || 'Unknown'}
-    Balloon Years: ${inputs.balloonYears || 'Unknown'}
-    
-    CALCULATED VALUES:
-    =================
-    Monthly NOI: ${calculations.monthlyNOI || 'Unknown'}
-    DSCR Loan Amount: ${calculations.dscrLoanAmount || 'Unknown'}
-    DSCR Monthly Payment: ${calculations.dscrMonthlyPayment || 'Unknown'}
-    Seller Carry Amount: ${calculations.sellerCarryAmount || 'Unknown'}
-    Seller Carry Payment: ${calculations.sellerCarryPayment || 'Unknown'}
-    Monthly Cash Flow: ${calculations.monthlyCashFlow || 'Unknown'}
-    Net Cash to Seller: ${calculations.netCashToSeller || 'Unknown'}
-    
-    SELLER INFORMATION:
-    =================
-    Seller Name: ${inputs.sellerName || 'Unknown'}
-    LLC Name: ${inputs.llcName || 'Unknown'}
-    Agent Email: ${inputs.agentEmail || 'Unknown'}
-    Agent Phone: ${inputs.agentPhone || 'Unknown'}
-  `
+Property: ${inputs.propertyAddress || 'Not specified'}
+Price: ${formatCurrency(inputs.purchasePrice)}
+Rent: ${formatCurrency(inputs.grossMonthlyRent)}/month
+Cash Flow: ${formatCurrency(calculations.monthlyCashFlow)}/month`
 }
