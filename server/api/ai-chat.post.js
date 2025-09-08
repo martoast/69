@@ -2,6 +2,9 @@
 import { OpenAI } from 'openai'
 import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs'
 
+// Set the worker source to use CDN - this works in production!
+pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/legacy/build/pdf.worker.min.js`
+
 export default defineEventHandler(async (event) => {
   // Only allow POST requests
   if (event.method !== 'POST') {
