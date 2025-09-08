@@ -650,16 +650,18 @@ const inputs = ref({
   purchasePrice: null,
   grossMonthlyRent: null,
   monthlyExpenses: 0,
-  dscrInterestRate: null,
-  dscrLTV: null,
-  sellerFinanceRate: null,
+  dscrInterestRate: 7.5,
+  dscrLTV: 75,
+  sellerFinanceRate: 5.0,
   amortizationYears: 30,
   downPaymentToSeller: null,
-  balloonYears: null,
+  balloonYears: 7,
   paymentType: "Interest Only",
   closingFeePercent: 4,
   llcName: "Orbius Capital Group LLC"
 })
+
+
 
 // Calculations - PROPERLY FIXED
 const calculations = computed(() => {
