@@ -22,15 +22,15 @@
             <!-- Template Selection -->
             <div class="flex bg-gray-100 rounded-lg p-1">
               <button
-                @click="selectedTemplate = 'seller-financing'"
+                @click="selectedTemplate = 'promissory-note'"
                 :class="[
                   'px-4 py-2 text-sm font-medium rounded-md transition-all duration-200',
-                  selectedTemplate === 'seller-financing' 
+                  selectedTemplate === 'promissory-note' 
                     ? 'bg-white text-gray-900 shadow-sm' 
                     : 'text-gray-600 hover:text-gray-900'
                 ]"
               >
-                Seller Financing
+                Promissory Note
               </button>
               <button
                 @click="selectedTemplate = 'preferred-equity'"
@@ -114,7 +114,7 @@ const props = defineProps({
 const emit = defineEmits(['close'])
 
 // Component state
-const selectedTemplate = ref('seller-financing')
+const selectedTemplate = ref('promissory-note')
 const isEditMode = ref(false)
 const editableContent = ref('')
 
@@ -151,8 +151,8 @@ const formatCurrency = (amount) => {
   }).format(amount)
 }
 
-// Generate Seller Financing LOI (existing template)
-const generateSellerFinancingLOI = () => {
+// Generate Promissory Note LOI (second-position lien structure)
+const generatePromissoryNoteLOI = () => {
   const { inputs, calculations } = props.dealData
   
   return `Letter of Intent to Purchase:
@@ -162,7 +162,7 @@ To: ${inputs.sellerName || 'Seller'}
 From: ${inputs.llcName || 'Orbius Capital Group LLC'}
 Property Address: ${inputs.propertyAddress}
 
-This Letter of Intent summarizes the proposed terms by ${inputs.llcName || 'Orbius Capital Group LLC'} (hereby "the Buyer") purchasing the property located at ${inputs.propertyAddress} (hereby "the Property"). The transaction will utilize a creative financing approach designed to provide you, Seller, hereby the "Property Owner(s)", with a large immediate downpayment and long-term income on your equity, while allowing us, as the buyer, to structure the purchase in a financially efficient manner.
+This Letter of Intent summarizes the proposed terms by ${inputs.buyerName || 'Buyer'} (hereby "the Buyer") purchasing the property located at ${inputs.propertyAddress} (hereby "the Property"). The transaction will utilize a creative financing approach designed to provide you, ${inputs.sellerName || 'Seller'}, hereby the "Property Owner(s)", with a large immediate downpayment and long-term income on your equity, while allowing us, as the buyer, to structure the purchase in a financially efficient manner.
 
 The closing will be facilitated by a licensed title company, escrow agent, or closing attorney (hereby "the Closing Agent"), and all funds will be disbursed at the close of escrow in accordance with mutually agreed-upon instructions contained in a definitive state approved Purchase and Sale Agreement ("PSA"). The transaction will occur in two distinct stages:
 
@@ -170,9 +170,19 @@ First Stage (All Cash Closing):
 At the initial all-cash closing, the Buyer will bring the full purchase price in cash. The Buyer intends to obtain a DSCR loan at ${inputs.dscrLTV}% loan-to-value (LTV) to reimburse a portion of the funds following this close. The Purchase and Sale Agreement and its incorporated escrow instructions shall direct the Closing Agent to hold funds in escrow until the second leg of the transaction is completed. The close will be contingent on the Property appraising at or above the agreed-upon purchase price. The Buyer will close escrow, and the title insurer will issue a title policy insuring the Buyer's interest in the Property after this first leg, with all associated title insurance premiums and related closing costs borne by the Buyer.
 
 Second Stage (Seller-Financing/Installment Sale):
-Following the close of escrow and completion of the first leg, the immediate second leg of the transaction is opened pursuant to detailed escrow instructions in the Purchase and Sale Agreement. The Closing Agent shall disburse the Seller's agreed-upon down payment, and instead of recording a Deed of Trust/Mortgage and Promissory Note, the Seller's remaining equity will be secured through the Buyer's LLC operating agreement, naming the Seller as a minority equity partner. In the event of a default, this structure entitles the Seller to obtain 100% ownership of the LLC, thereby regaining full control of the Property without the need for foreclosure. The Seller-financed portion shall still be structured as an installment sale, providing ongoing, tax-advantaged income while simultaneously reducing the Seller's immediate tax burden.
+Following the close of escrow and completion of the first leg, the immediate second leg of the transaction is opened pursuant to detailed escrow instructions in the Purchase and Sale Agreement. The Closing Agent shall disburse the Seller's agreed-upon down payment, and the balance of the Purchase Price due to the Seller will be documented by a duly executed Promissory Note secured by a Second Deed of Trust/Mortgage against the Property. The Seller will thereby hold a second-position lien immediately junior to the Buyer's primary lender.
 
-Proposed Terms:
+In the event of a default, the Seller's security interest provides the legal right to foreclose and recover proceeds in accordance with their lien priority, thereby ensuring direct recourse against the Property itself. The Seller-financed portion shall still be structured as an installment sale, providing ongoing, tax-advantaged income while simultaneously reducing the Seller's immediate tax burden. The title insurer will issue a title policy insuring the Buyer's interest in the Property, subject to the Seller's recorded second lien, with all associated title insurance premiums and related closing costs borne by the Buyer.
+
+This secured financing structure enables the Buyer to acquire the Property at retail pricing with a comparatively low capitalization rate, while remitting a substantial portion of the Purchase Price to the Seller as an immediate down payment. Concurrently, by structuring the balance as an installment sale secured by a second lien, the Seller is able to defer and potentially minimize immediate tax liabilities while maintaining the protection of a recorded security interest.
+
+In accordance with IRS guidance for installment sales (IRS Publication 537), "income received over time through an installment sale may, under certain circumstances, be treated as ordinary income." This approach allows for recognition of gains and associated tax obligations to be spread over multiple tax years, rather than realized in a single lump sum, potentially resulting in a more favorable tax outcome.
+
+Additionally, the Buyer will cover the full listing agent's commission, all title insurance premiums, and all customary closing costs, fees, and related expenses. This allocation ensures the Seller realizes the full benefit of the agreed-upon financial terms without incurring out-of-pocket transactional costs.
+
+This LOI is provided solely as an outline and for the purpose of facilitating further discussion. Except as may be otherwise agreed in writing (such as confidentiality or exclusivity provisions), this LOI is non-binding. Neither Party shall be legally obligated to proceed unless and until both Parties execute a definitive State-approved PSA and related ancillary documents that fully memorialize the terms and conditions of the transaction.
+
+Proposed Terms
 
 1. Purchase Price:
 Total purchase price: ${formatCurrency(inputs.purchasePrice)}
@@ -180,22 +190,22 @@ This is a true NET as the buyer pays all closing costs and listing agent commiss
 
 2. Financing Structure:
 ${formatCurrency(calculations.downPayment)} to be paid at COE.
-${formatCurrency(calculations.sellerCarryAmount)} carried by the seller as a minority equity partner.
+${formatCurrency(calculations.sellerCarryAmount)} carried by the seller as a second position lien holder.
 
 3. Transaction Mechanics:
 Earnest Money Deposit: ${formatCurrency(calculations.emd)} To be deposited to the Title/Escrow company within 3 days after PSA is executed.
 
 Initial Closing: At closing, the ${formatCurrency(inputs.downPaymentToSeller)} down payment is made to the Seller. This amount should also pay off the existing mortgage on the property. Additionally, Buyer will pay all reasonable closing costs associated with the sale along with the commission to the Sellers agent.
 
-Seller-Equity Agreement: Simultaneously, the Buyer's LLC operating agreement is executed to reflect the Seller's minority equity interest corresponding to the ${formatCurrency(calculations.sellerCarryAmount)}. Escrow returns this portion to the Buyer post-closing, while the Seller retains a secured interest in the LLC for that amount, with rights to assume full ownership of the LLC in the event of default.
+Seller Financing Agreement: Simultaneously, the Buyer executes a Promissory Note in favor of the Seller for ${formatCurrency(calculations.sellerCarryAmount)}, which is secured by a duly recorded Second Deed of Trust/Mortgage against the Property. Escrow disburses the down payment funds to the Seller at closing, and the Seller retains a secured lien interest in the Property for the financed amount. In the event of default, the Seller, as second-position lien holder, has the legal right to initiate foreclosure proceedings or otherwise enforce remedies consistent with their lien priority.
 
-4. Seller-Equity Terms:
+4. Seller Financing Terms:
 Principal Balance: ${formatCurrency(calculations.sellerCarryAmount)}
 Terms: ${inputs.sellerFinanceRate}% ${inputs.paymentType} Payments
 Monthly Payments: ${formatCurrency(calculations.sellerCarryPayment)}
 Balloon Payment for Remaining Balance: Any remaining balance shall be due in full no later than ${inputs.balloonYears} years from the date of closing.
 
-The balloon payment shall be eligible for annual extensions, provided that the Buyer is unable, despite good faith efforts, to refinance the Property at or below a 75% loan-to-value (LTV) ratio. Each extension shall require written notice to the Seller no less than thirty (30) days prior to the maturity date, accompanied by documentation evidencing the Buyer's refinance efforts. Any extension shall be granted in one-year increments, subject to mutual agreement and continued compliance with the terms of the equity agreement.
+The balloon payment shall be eligible for annual extensions, provided that the Buyer is unable, despite good faith efforts, to refinance the Property at or below a ${inputs.dscrLTV}% loan-to-value (LTV) ratio. Each extension shall require written notice to the Seller no less than thirty (30) days prior to the maturity date, accompanied by documentation evidencing the Buyer's refinance efforts. Any extension shall be granted in one-year increments, subject to mutual agreement and continued compliance with the terms of the equity agreement.
 
 Prepayment Option: The buyer retains the right to prepay the note without penalty.
 
@@ -230,7 +240,7 @@ Title: __________________________________
 Date: ___________________________________
 
 Buyer: ${inputs.llcName || 'Orbius Capital Group LLC'}
-Signature: ___________________________________
+Signature: <img src="/signature.jpg" style="height: 40px; width: auto; vertical-align: middle;" alt="Signature">
 Printed Name: ${inputs.buyerName || 'Mikhail Kravtsov'}
 Title: Member
 Date: ${getCurrentDate()}
@@ -240,135 +250,122 @@ Agent Email: ${inputs.agentEmail}
 Agent Phone: ${inputs.agentPhone}`
 }
 
-// Generate Preferred Equity LOI (new template)
+// Generate Preferred Equity LOI
 const generatePreferredEquityLOI = () => {
   const { inputs, calculations } = props.dealData
   
-  return `ORBIUS CAPITAL GROUP LLC
-PREFERRED EQUITY AGREEMENT
+  return `Letter of Intent to Purchase:
 
 Date: ${getCurrentDate()}
 To: ${inputs.sellerName || 'Property Owner'}
 From: ${inputs.llcName || 'Orbius Capital Group LLC'}
 Property Address: ${inputs.propertyAddress}
 
-Dear ${inputs.sellerName || 'Property Owner'},
+This Letter of Intent summarizes the proposed terms by ${inputs.buyerName || 'Buyer'} (hereby "the Buyer") purchasing the property located at ${inputs.propertyAddress} (hereby "the Property"). The transaction will utilize a creative financing approach designed to provide you, ${inputs.sellerName || 'Property Owner'}, hereby the "Property Owner(s)", with a large immediate downpayment and long-term income on your equity, while allowing us, as the buyer, to structure the purchase in a financially efficient manner.
 
-${inputs.llcName || 'Orbius Capital Group LLC'} ("Investor") is pleased to present this Letter of Intent for a preferred equity investment opportunity regarding the commercial real estate property located at ${inputs.propertyAddress} ("Property").
+The closing will be facilitated by a licensed title company, escrow agent, or closing attorney (hereby "the Closing Agent"), and all funds will be disbursed at the close of escrow in accordance with mutually agreed-upon instructions contained in a definitive state approved Purchase and Sale Agreement ("PSA"). The transaction will occur in two distinct stages:
 
-INVESTMENT STRUCTURE OVERVIEW
+First Stage (All Cash Closing):
+At the initial all-cash closing, the Buyer will bring the full purchase price in cash. The Buyer intends to obtain a DSCR loan at ${inputs.dscrLTV}% loan-to-value (LTV) to reimburse a portion of the funds following this close. The Purchase and Sale Agreement and its incorporated escrow instructions shall direct the Closing Agent to hold funds in escrow until the second leg of the transaction is completed. The close will be contingent on the Property appraising at or above the agreed-upon purchase price. The Buyer will close escrow, and the title insurer will issue a title policy insuring the Buyer's interest in the Property after this first leg, with all associated title insurance premiums and related closing costs borne by the Buyer.
 
-This preferred equity structure allows you to retain ownership and operational control of your property while accessing immediate capital for your business needs. Unlike traditional debt financing, this arrangement provides you with a strategic partnership that aligns our interests with your long-term success.
+Second Stage (Seller-Financing/Installment Sale):
+Following the close of escrow and completion of the first leg, the immediate second leg of the transaction is opened pursuant to detailed escrow instructions in the Purchase and Sale Agreement. The Closing Agent shall disburse the Seller's agreed-upon down payment, and instead of recording a Deed of Trust/Mortgage and Promissory Note, the Seller's remaining equity will be secured through the Buyer's LLC operating agreement, naming the Seller as a minority equity partner. In the event of a default, this structure entitles the Seller to obtain 100% ownership of the LLC, thereby regaining full control of the Property without the need for foreclosure. The Seller-financed portion shall still be structured as an installment sale, providing ongoing, tax-advantaged income while simultaneously reducing the Seller's immediate tax burden. To further protect the Seller's financial interest in the Property, we offer a Seller Protection Clause (please see the bottom of this Section for more details). The title insurer will issue a title policy insuring the Buyer's interest in the Property after this second leg, with all associated title insurance premiums and related closing costs borne by the Buyer.
 
-PROPOSED INVESTMENT TERMS
+This creative structure enables the Buyer to acquire the Property at a comparatively low capitalization rate at retail pricing, while remitting a substantial portion of the Purchase Price to the Seller as an immediate down payment. Concurrently, by structuring the balance as an installment sale with seller financing, the Seller is able to defer and potentially minimize immediate tax liabilities. The Seller, thus, secures an aggressive purchase price, a significant down payment, and the potential for a reduced overall tax burden.
 
-1. INVESTMENT AMOUNT & STRUCTURE
-• Total Investment: ${formatCurrency(inputs.purchasePrice * 0.8)} (80% of property value)
-• Property Valuation: ${formatCurrency(inputs.purchasePrice)}
-• Investment Type: Preferred Equity Position
-• Your Retained Ownership: 20% Common Equity
+In accordance with guidance set forth by the Internal Revenue Service (IRS) for installment sales (see, e.g., IRS Publication 537), "income received over time through an installment sale may, under certain circumstances, be treated as ordinary income." This approach allows for the recognition of gains and the associated tax obligations to be spread over multiple tax years, rather than realized in a single lump sum, potentially resulting in a more favorable tax outcome.
 
-2. PREFERRED RETURN STRUCTURE
-• Preferred Return Rate: ${inputs.sellerFinanceRate}% annually
-• Payment Frequency: Monthly payments of ${formatCurrency((inputs.purchasePrice * 0.8 * inputs.sellerFinanceRate / 100) / 12)}
-• Payment Priority: Preferred returns paid before any common distributions
+Additionally, the Buyer will cover the full listing agent's commission, all title insurance premiums, all customary closing costs, fees, and related expenses. This allocation ensures the Seller realizes the full benefit of the agreed-upon financial terms without incurring out-of-pocket transactional costs.
 
-3. TERM & EXIT PROVISIONS
-• Initial Term: ${inputs.balloonYears} years
-• Extension Options: Available upon mutual agreement
-• Buyout Option: You may repurchase our preferred position at any time without penalty
-• Refinance Rights: Our consent required for any refinancing or additional debt
+This LOI is provided solely as an outline and for the purpose of facilitating further discussion. Except as may be otherwise agreed in writing (such as confidentiality or exclusivity provisions), this LOI is non-binding. Neither Party shall be legally obligated to proceed unless and until both Parties execute a definitive State-approved PSA and related ancillary documents that fully memorialize the terms and conditions of the transaction.
 
-4. PROPERTY MANAGEMENT & CONTROL
-• Operational Control: You retain full management and operational control
-• Major Decisions: Investor approval required for:
-  - Sale of the property
-  - Refinancing above 75% LTV
-  - Major capital improvements exceeding $50,000
-• Monthly Reporting: Basic financial reporting required
+Seller Protection Clause - Operating Agreement with Default Control Provisions:
+Instead of holding a second-position lien, the Seller and Buyer will enter into an LLC operating agreement (or land trust with an assignment of beneficial interest) where the Seller maintains certain minority equity interest.
 
-5. CASH FLOW DISTRIBUTION WATERFALL
-• 1st Priority: Operating expenses and debt service
-• 2nd Priority: Preferred return to Investor (${inputs.sellerFinanceRate}% annually)
-• 3rd Priority: Remaining cash flow to you as property owner
+The LLC or trust holds title to the property, and the Buyer operates as the primary manager/member.
 
-6. INVESTOR PROTECTIONS
-• Lien Position: Our investment secured by property deed of trust
-• Insurance Requirements: Comprehensive property insurance naming Investor as additional insured
-• Reserve Requirements: Minimum 3-month operating expense reserve
-• Financial Covenants: Maintain property NOI above ${formatCurrency(calculations.monthlyNOI * 12)}
+The agreement includes a clause that allows the Seller to regain full control of the LLC or trust (and thus the property) if the Buyer defaults on their financial obligations (missed payments, failure to insure, etc.).
 
-7. YOUR BENEFITS
-• Immediate Capital: Access ${formatCurrency(inputs.purchasePrice * 0.8)} in funds
-• Retained Control: You continue to own and operate the property
-• Tax Advantages: Structure may provide favorable tax treatment
-• No Personal Guarantees: Investment secured solely by property
-• Flexible Exit: Multiple options for buyout or refinance
+Proposed Terms
 
-8. CLOSING TIMELINE & CONDITIONS
-• Due Diligence Period: 15 business days from executed LOI
-• Closing Timeline: 30 days following due diligence completion
-• Title & Escrow: Professional title company to handle all documentation
-• All Costs: Investor covers all closing costs and legal fees
+1. Purchase Price:
+Total purchase price: ${formatCurrency(inputs.purchasePrice)}
+This is a true NET as the buyer pays all closing costs and listing agent commissions.
 
-9. DUE DILIGENCE REQUIREMENTS
-We will need to review:
-• Last 24 months of property financial statements
-• Current rent roll and all lease agreements
-• Property management agreements and vendor contracts
-• Insurance policies and claims history
-• Recent property appraisal or BPO
-• Environmental and property condition reports
+2. Financing Structure:
+${formatCurrency(calculations.downPayment)} to be paid at COE.
+${formatCurrency(calculations.sellerCarryAmount)} carried by the seller as a minority equity partner.
 
-CONDITIONS PRECEDENT
-• Satisfactory completion of due diligence
-• Clear and marketable title
-• All licenses and permits current and transferable
-• Property insurance in place and adequate
-• No material adverse changes to property condition or tenancy
+3. Transaction Mechanics:
+Earnest Money Deposit: ${formatCurrency(calculations.emd)} To be deposited to the Title/Escrow company within 3 days after PSA is executed.
 
-MUTUAL BENEFITS
-This preferred equity structure provides you with immediate capital while allowing you to retain ownership and control. For us, it provides a secured investment with predictable returns backed by quality real estate.
+Initial Closing: At closing, the ${formatCurrency(inputs.downPaymentToSeller)} down payment is made to the Seller. This amount should also pay off the existing mortgage on the property. Additionally, Buyer will pay all reasonable closing costs associated with the sale along with the commission to the Sellers agent.
 
-CONFIDENTIALITY & EXCLUSIVITY
-The terms of this LOI are confidential. We request a 7-day exclusivity period to complete our due diligence and finalize documentation.
+Seller-Equity Agreement: Simultaneously, the Buyer's LLC operating agreement is executed to reflect the Seller's minority equity interest corresponding to the ${formatCurrency(calculations.sellerCarryAmount)}. Escrow returns this portion to the Buyer post-closing, while the Seller retains a secured interest in the LLC for that amount, with rights to assume full ownership of the LLC in the event of default.
 
-NEXT STEPS
-Upon your acceptance of these terms, we will:
-1. Execute a formal Preferred Equity Agreement
-2. Begin due diligence process immediately
-3. Coordinate with title company for closing
-4. Fund the investment within 30 days
+4. Seller-Equity Terms:
+Principal Balance: ${formatCurrency(calculations.sellerCarryAmount)}
+Terms: ${inputs.sellerFinanceRate}% ${inputs.paymentType} Payments
+Monthly Payments: ${formatCurrency(calculations.sellerCarryPayment)}
+Balloon Payment for Remaining Balance: Any remaining balance shall be due in full no later than ${inputs.balloonYears} years from the date of closing.
 
-We believe this structure provides the optimal solution for your capital needs while preserving your ownership position. We look forward to discussing this opportunity further.
+The balloon payment shall be eligible for annual extensions, provided that the Buyer is unable, despite good faith efforts, to refinance the Property at or below a ${inputs.dscrLTV}% loan-to-value (LTV) ratio. Each extension shall require written notice to the Seller no less than thirty (30) days prior to the maturity date, accompanied by documentation evidencing the Buyer's refinance efforts. Any extension shall be granted in one-year increments, subject to mutual agreement and continued compliance with the terms of the equity agreement.
 
-Sincerely,
+Prepayment Option: The buyer retains the right to prepay the note without penalty.
 
-${inputs.buyerName || 'Mikhail Kravtsov'}
-Managing Member
-${inputs.llcName || 'Orbius Capital Group LLC'}
-Phone: ${inputs.buyerPhone || '(737) 733-1413'}
-Email: ${inputs.agentEmail || 'contact@orbiuscapital.com'}
+5. Buyer Responsibilities:
+• As-Is Purchase: The Property shall be conveyed in its current condition, "AS IS, WHERE IS," with all faults, and without any obligation on the Seller to perform repairs, provide credits, or make concessions.
+• Due Diligence Period: The Buyer shall have a specified due diligence period to conduct inspections, review title, confirm zoning and permitting status, investigate the condition of the Property.
+• Occupancy and Tenancies: If the Property is occupied by tenants, the Buyer will assume responsibility for all existing leases, rental agreements, security deposits, and landlord obligations following closing.
+• Ongoing Costs: Upon closing, the Buyer shall bear sole responsibility for all ongoing carrying costs related to the Property.
+• Agent Commissions: The Buyer agrees to pay any and all real estate brokerage commissions.
 
-ACCEPTANCE
+6. Seller Responsibilities & Disclosures:
+• Full Disclosure of Material Facts
+• Provision of Financial and Operational Documentation
+• Accuracy and Completeness of Information
+• Cooperation with Due Diligence
 
-I/We have reviewed and accept the terms outlined in this Letter of Intent for preferred equity investment.
+7. Title, Escrow, and Documentation:
+All title and escrow services shall be conducted through mutually acceptable and reputable title/escrow company.
 
-Property Owner: ${inputs.sellerName || '_________________________'}
+8. Closing Costs:
+Closing costs, including title insurance, prorated taxes, HOA fees, and other customary expenses, will be allocated as follows: Buyer Covers All
 
-Signature: ___________________________________ Date: ___________
+9. Due Diligence Period and Closing Timeline:
+Due Diligence Period ("DD Period"): The Buyer shall have a fifteen (15) day period commencing on the Effective Date of the Purchase and Sale Agreement.
+Close of Escrow ("COE"): The Close of Escrow shall occur no later than thirty (30) days following the expiration of the DD Period.
 
-Print Name: __________________________________
+Additional Considerations:
+• Force Majeure: In the event of unforeseen circumstances (force majeure), both parties agree to consider reasonable extensions to deadlines.
 
-Title: _______________________________________
+Next Steps:
+If you find these terms acceptable, we will proceed with drafting a detailed Purchase and Sale Agreement (PSA).
 
-Investor: ${inputs.llcName || 'Orbius Capital Group LLC'}
+This LOI is non-binding, except for any confidentiality and exclusivity clauses detailed below.
 
-Signature: ___________________________________ Date: ${getCurrentDate()}
+Confidentiality:
+The terms and details of this LOI are confidential and may not be shared with third parties without mutual written consent.
 
-Print Name: ${inputs.buyerName || 'Mikhail Kravtsov'}
+Exclusivity:
+By signing this LOI, you agree to grant the buyer exclusivity for 5 days, refraining from soliciting or accepting other offers during this period to allow completion of due diligence and finalization of documents.
 
-Title: Managing Member`
+Governing Law:
+This LOI and subsequent agreements will be governed by the laws of FL
+
+Acknowledgment and Agreement:
+
+Seller: ${inputs.sellerName || 'Property Owner'}
+Signature: ___________________________________
+Printed Name: __________________________________
+Title: __________________________________
+Date: ___________________________________
+
+Buyer: ${inputs.llcName || 'Orbius Capital Group LLC'}
+Signature: <img src="/signature.jpg" style="height: 40px; width: auto; vertical-align: middle;" alt="Signature">
+Printed Name: ${inputs.buyerName || 'Mikhail Kravtsov'}
+Title: Member
+Date: ${getCurrentDate()}`
 }
 
 // Generate plain text LOI based on selected template
@@ -376,7 +373,7 @@ const generatePlainTextLOI = () => {
   if (selectedTemplate.value === 'preferred-equity') {
     return generatePreferredEquityLOI()
   } else {
-    return generateSellerFinancingLOI()
+    return generatePromissoryNoteLOI()
   }
 }
 
@@ -440,7 +437,7 @@ const formattedContent = computed(() => {
 const printLOI = () => {
   const printWindow = window.open('', '_blank')
   const content = document.getElementById('loi-content').outerHTML
-  const templateType = selectedTemplate.value === 'preferred-equity' ? 'Preferred Equity Agreement' : 'Letter of Intent'
+  const templateType = selectedTemplate.value === 'preferred-equity' ? 'Preferred Equity Agreement' : 'Promissory Note Agreement'
   
   printWindow.document.write(`
     <!DOCTYPE html>
@@ -507,7 +504,7 @@ watch(() => props.isOpen, (newValue) => {
   if (newValue) {
     editableContent.value = generatePlainTextLOI()
     isEditMode.value = false
-    selectedTemplate.value = 'seller-financing' // Default to seller financing
+    selectedTemplate.value = 'promissory-note' // Default to promissory note
   }
 })
 </script>

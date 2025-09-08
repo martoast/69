@@ -89,15 +89,40 @@
               </div>
             </div>
 
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2"
+                  >Buyer Name</label
+                >
+                <input
+                  v-model="inputs.buyerName"
+                  type="text"
+                  class="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-yellow-gold focus:border-transparent"
+                  placeholder="Enter buyer name"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2"
+                  >Buyer Email</label
+                >
+                <input
+                  v-model="inputs.buyerEmail"
+                  type="email"
+                  class="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-yellow-gold focus:border-transparent"
+                  placeholder="buyer@email.com"
+                />
+              </div>
+            </div>
+
             <div>
               <label class="block text-sm font-medium text-gray-300 mb-2"
-                >Buyer Name</label
+                >Buyer Phone</label
               >
               <input
-                v-model="inputs.buyerName"
-                type="text"
+                v-model="inputs.buyerPhone"
+                type="tel"
                 class="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-yellow-gold focus:border-transparent"
-                placeholder="Enter buyer name"
+                placeholder="(555) 123-4567"
               />
             </div>
 
@@ -106,7 +131,7 @@
                 >LLC Name</label
               >
               <input
-                value="Orbius Capital Group LLC"
+                v-model="inputs.llcName"
                 type="text"
                 class="w-full px-4 py-3 bg-gray-700/50 border border-gray-600 rounded-lg text-gray-400 cursor-not-allowed"
                 readonly
@@ -338,7 +363,7 @@
                 <div class="flex justify-between">
                   <span class="text-gray-300">Interest Rate:</span>
                   <span class="font-mono text-green-400"
-                    >{{ inputs.sellerFinanceRate }}%</span
+                    >{{ inputs.sellerFinanceRate || 0 }}%</span
                   >
                 </div>
                 <div class="flex justify-between">
@@ -579,88 +604,96 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from "vue";
-import LOIGenerator from "./LOIGenerator.vue";
-import SMSTemplateGenerator from "./SMSTemplateGenerator.vue";
-import EmailTemplateGenerator from "./EmailTemplateGenerator.vue";
+import { ref, computed } from "vue";
+import LOIGenerator from './LOIGenerator.vue';
+import SMSTemplateGenerator from './SMSTemplateGenerator.vue';
+import EmailTemplateGenerator from './EmailTemplateGenerator.vue';
 
-const showLOIModal = ref(false);
-const showSMSModal = ref(false);
-const showEmailModal = ref(false);
+// Modal states
+const showLOIModal = ref(false)
+const showSMSModal = ref(false)
+const showEmailModal = ref(false)
 
-const emit = defineEmits(["deal-data-updated"]);
+// Payment calculation helper - MATCHES EXCEL PMT FUNCTION
+function PMT(rate, nper, pv) {
+  if (rate === 0) return pv / nper;
+  return (rate * pv) / (1 - Math.pow(1 + rate, -nper));
+}
 
-// Inputs reactive object
+// Format number helper function with error handling
+const formatNumber = (value) => {
+  // Handle null, undefined, or non-numeric values
+  if (value === null || value === undefined || isNaN(value)) {
+    return '0';
+  }
+  
+  // Convert to number if it's not already
+  const numValue = Number(value);
+  
+  // Format with commas for thousands
+  return numValue.toLocaleString('en-US', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  });
+}
+
+// Form inputs
 const inputs = ref({
-  propertyAddress: "",
-  agentName: "",
-  sellerName: "",
-  agentEmail: "",
-  agentPhone: "",
-  purchasePrice: 0,
-  grossMonthlyRent: 0,
+  propertyAddress: "2900 W Flagler St, Miami, FL 33135",
+  purchasePrice: 3600000,
+  grossMonthlyRent: 18339,
   monthlyExpenses: 0,
   dscrInterestRate: 7.5,
   dscrLTV: 75,
-  sellerFinanceRate: 5.0,
+  sellerFinanceRate: 5,
   amortizationYears: 30,
-  downPaymentToSeller: 0,
+  downPaymentToSeller: 340000,  // Corrected from 2,340,000
   balloonYears: 7,
   paymentType: "Interest Only",
-  closingFeePercent: 4.0,
-  // Now editable buyer name
-  buyerName: "Mikhail Kravtsov",
-  buyerPhone: "+1 (737) 733-1413",
-  llcName: "Orbius Capital Group LLC",
-});
+  closingFeePercent: 4,
+  llcName: "Orbius Capital Group LLC"
+})
 
-// PMT function for loan calculations
-const PMT = (rate, nper, pv) => {
-  if (rate === 0) return -pv / nper;
-  return (
-    (-pv * (rate * Math.pow(1 + rate, nper))) / (Math.pow(1 + rate, nper) - 1)
-  );
-};
-
-// Calculated values
+// Calculations - PROPERLY FIXED
 const calculations = computed(() => {
   const purchasePrice = inputs.value.purchasePrice || 0;
   const grossMonthlyRent = inputs.value.grossMonthlyRent || 0;
   const monthlyExpenses = inputs.value.monthlyExpenses || 0;
   const dscrInterestRate = (inputs.value.dscrInterestRate || 0) / 100;
-  const dscrLTV = inputs.value.dscrLTV || 0;
+  const dscrLTV = (inputs.value.dscrLTV || 0) / 100;
   const sellerFinanceRate = (inputs.value.sellerFinanceRate || 0) / 100;
   const amortizationYears = inputs.value.amortizationYears || 30;
   const downPaymentToSeller = inputs.value.downPaymentToSeller || 0;
-  const balloonYears = inputs.value.balloonYears || 7;
   const paymentType = inputs.value.paymentType || "Interest Only";
   const closingFeePercent = (inputs.value.closingFeePercent || 4) / 100;
 
-  // Monthly NOI = Gross Monthly Rent - Monthly Expenses
+  // Monthly NOI
   const monthlyNOI = grossMonthlyRent - monthlyExpenses;
 
-  // DSCR Loan Amount = Purchase Price * LTV / 100
-  const dscrLoanAmount = (purchasePrice * dscrLTV) / 100;
+  // DSCR loan amount
+  const dscrLoanAmount = purchasePrice * dscrLTV;
 
-  // DSCR Monthly Payment = PMT(rate/12, 360, -loan_amount)
-  const dscrMonthlyPayment =
-    dscrLoanAmount > 0 ? PMT(dscrInterestRate / 12, 360, -dscrLoanAmount) : 0;
+  // DSCR monthly payment
+  const dscrMonthlyPayment = dscrLoanAmount > 0
+    ? PMT(dscrInterestRate / 12, amortizationYears * 12, dscrLoanAmount)
+    : 0;
 
-  // Down Payment = DSCR Loan Amount (what goes to the bank)
-  const downPayment = dscrLoanAmount;
+  // CRITICAL: Calculate what's left after DSCR loan
+  const remainingAfterDSCR = purchasePrice - dscrLoanAmount;
+  
+  // The seller carry is what's left after the down payment
+  // But it can't be negative!
+  const sellerCarryAmount = Math.max(0, remainingAfterDSCR - downPaymentToSeller);
 
-  // Seller Carry Amount = Purchase Price - Down Payment to Seller
-  const sellerCarryAmount = purchasePrice - downPaymentToSeller;
-
-  // Seller Carry Monthly Payment calculation
+  // Seller carry monthly payment
   let sellerCarryPayment = 0;
   if (sellerCarryAmount > 0) {
     if (paymentType === "Interest Only") {
       sellerCarryPayment = (sellerCarryAmount * sellerFinanceRate) / 12;
     } else if (paymentType === "Principal Only") {
       sellerCarryPayment = sellerCarryAmount / (amortizationYears * 12);
-    } else if (paymentType === "Principal and Interest") {
-      sellerCarryPayment = -PMT(
+    } else {
+      sellerCarryPayment = PMT(
         sellerFinanceRate / 12,
         amortizationYears * 12,
         sellerCarryAmount
@@ -668,40 +701,27 @@ const calculations = computed(() => {
     }
   }
 
-  // Total Monthly Outflow = Monthly Expenses + DSCR Payment + Seller Carry Payment
-  const totalMonthlyOutflow =
-    monthlyExpenses + dscrMonthlyPayment + sellerCarryPayment;
+  // Total monthly outflow
+  const totalMonthlyOutflow = dscrMonthlyPayment + sellerCarryPayment;
 
-  // Monthly Cash Flow = Monthly NOI - Total Monthly Outflow
+  // Monthly cash flow
   const monthlyCashFlow = monthlyNOI - totalMonthlyOutflow;
 
-  // EMD = Purchase Price * 0.01 (1%)
+  // DSCR ratio
+  const dscrRatio = dscrMonthlyPayment > 0 ? monthlyNOI / dscrMonthlyPayment : 0;
+
+  // Other calculations
   const emd = purchasePrice * 0.01;
-
-  // Closing Fees + Agent = Purchase Price * closingFeePercent (user-configurable)
   const closingFees = purchasePrice * closingFeePercent;
-
-  // Assignment Fee = Purchase Price * 0.03 (3%)
   const assignmentFee = purchasePrice * 0.03;
-
-  // Net to Buyer = DSCR Loan Amount - Down Payment to Seller - Closing Fees - Assignment Fee
-  const netToBuyer =
-    dscrLoanAmount - downPaymentToSeller - closingFees - assignmentFee;
-
-  // Net Cash to Seller = Down Payment to Seller + (Seller Carry Payment * Balloon Years * 12) + Seller Carry Amount
-  const totalInterestPayments = sellerCarryPayment * balloonYears * 12;
-  const netCashToSeller =
-    downPaymentToSeller + totalInterestPayments + sellerCarryAmount;
-
-  // DSCR Ratio calculation
-  const dscrRatio =
-    dscrMonthlyPayment > 0 ? monthlyNOI / dscrMonthlyPayment : 0;
+  const netToBuyer = dscrLoanAmount - downPaymentToSeller - closingFees - assignmentFee;
+  const netCashToSeller = downPaymentToSeller;
 
   return {
     monthlyNOI,
     dscrLoanAmount,
     dscrMonthlyPayment,
-    downPayment,
+    downPayment: downPaymentToSeller,
     sellerCarryAmount,
     sellerCarryPayment,
     totalMonthlyOutflow,
@@ -720,39 +740,31 @@ const isFormValid = computed(() => {
   return (
     inputs.value.propertyAddress &&
     inputs.value.purchasePrice > 0 &&
-    inputs.value.grossMonthlyRent > 0
+    inputs.value.grossMonthlyRent > 0 &&
+    inputs.value.dscrInterestRate > 0 &&
+    inputs.value.dscrLTV > 0 &&
+    inputs.value.sellerFinanceRate > 0 &&
+    inputs.value.downPaymentToSeller >= 0
   );
 });
 
-// Format number for display
-const formatNumber = (num) => {
-  if (num === undefined || num === null) return "0";
-  return Math.round(num).toLocaleString();
-};
-
-// Watch for changes to emit deal data to parent
-watch(
-  [inputs, calculations],
-  () => {
-    emit("deal-data-updated", {
-      inputs: inputs.value,
-      calculations: calculations.value,
-    });
-  },
-  { deep: true }
-);
-
-// Generate template functions
+// Action functions
 const generateLOI = () => {
-  showLOIModal.value = true;
+  if (isFormValid.value) {
+    showLOIModal.value = true;
+  }
 };
 
 const generateSMSTemplate = () => {
-  showSMSModal.value = true;
+  if (isFormValid.value) {
+    showSMSModal.value = true;
+  }
 };
 
 const generateEmailTemplate = () => {
-  showEmailModal.value = true;
+  if (isFormValid.value) {
+    showEmailModal.value = true;
+  }
 };
 </script>
 
