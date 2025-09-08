@@ -1,5 +1,6 @@
 // server/api/ai-chat.post.js
 import { OpenAI } from 'openai'
+import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs'
 
 export default defineEventHandler(async (event) => {
   // Only allow POST requests
@@ -52,27 +53,34 @@ export default defineEventHandler(async (event) => {
       })
     }
     console.log('=== END REQUEST ===')
+
+    // Check what type of files we have
+    const hasImages = files && files.some(f => f.type.startsWith('image/'))
     
     // Prepare system message
-    const systemMessage = `You are a real estate investment advisor. Help analyze deals and answer questions about properties.
+    const systemMessage = `You are an expert commercial real estate investment advisor for the 69 Tool platform. 
+You help users analyze deals, structure offers, and make smart investment decisions.
 
 Current property data:
 ${propertyContext}
 
-Be specific about numbers and calculations when relevant.`
+When analyzing documents:
+- Extract key financial information (NOI, cap rates, rents, expenses)
+- Identify deal terms and conditions
+- Highlight risks and opportunities
+- Suggest negotiation strategies
+- Provide specific recommendations based on the numbers
 
-    // Check if we have images
-    const hasImages = files && files.some(f => f.type.startsWith('image/'))
-    
-    // Choose the appropriate model and prepare messages
+Be specific, actionable, and focus on helping users close profitable deals.`
+
+    // Build messages based on content type
     let apiMessages = []
-    let model = "gpt-3.5-turbo" // Default model
+    let model = "gpt-3.5-turbo"
     
     if (hasImages) {
-      // Use GPT-4o for vision capabilities
-      model = "gpt-4o" // or "gpt-4-turbo" if you have access
+      // Use GPT-4 Vision for images
+      model = "gpt-4o"
       
-      // Build the content array for vision model
       const contentArray = [
         {
           type: "text",
@@ -80,40 +88,20 @@ Be specific about numbers and calculations when relevant.`
         }
       ]
       
-      // Add each image
-      files.forEach(file => {
-        if (file.type.startsWith('image/')) {
-          contentArray.push({
-            type: "image_url",
-            image_url: {
-              url: file.content, // This should be the base64 data URL
-              detail: "high" // Can be "low", "high", or "auto"
-            }
-          })
-        }
-      })
-      
-      // For text files, add their content as text
-      files.forEach(file => {
-        if (file.type === 'text/plain' || file.type.includes('text')) {
-          try {
-            const base64Data = file.content.split(',')[1]
-            const textContent = Buffer.from(base64Data, 'base64').toString('utf-8')
+      // Add images to content
+      if (files) {
+        files.forEach(file => {
+          if (file.type.startsWith('image/')) {
             contentArray.push({
-              type: "text",
-              text: `\nContent of ${file.name}:\n${textContent}`
+              type: "image_url",
+              image_url: {
+                url: file.content,
+                detail: "high"
+              }
             })
-          } catch (error) {
-            console.error('Error processing text file:', error)
           }
-        } else if (file.type === 'application/pdf') {
-          // Add a note about PDF
-          contentArray.push({
-            type: "text",
-            text: `\n[Note: PDF file "${file.name}" was uploaded. For full PDF analysis, consider using a PDF extraction service or copy the text content.]`
-          })
-        }
-      })
+        })
+      }
       
       apiMessages = [
         { role: "system", content: systemMessage },
@@ -121,44 +109,110 @@ Be specific about numbers and calculations when relevant.`
       ]
       
     } else {
-      // No images - use standard text format
-      let userContent = lastUserMessage.content || "Please help me analyze this deal."
+      // Handle text-based files including PDFs
+      let userContent = lastUserMessage.content || "Please analyze the attached files."
       
-      // Process any text files
       if (files && files.length > 0) {
-        files.forEach(file => {
-          if (file.type === 'text/plain' || file.type.includes('text')) {
+        for (const file of files) {
+          if (file.type === 'application/pdf') {
             try {
               const base64Data = file.content.split(',')[1]
-              const textContent = Buffer.from(base64Data, 'base64').toString('utf-8')
-              userContent += `\n\nContent of ${file.name}:\n${textContent}`
+              const pdfData = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0))
+              
+              console.log(`Processing PDF: ${file.name}`)
+              
+              // Load the PDF document
+              const loadingTask = pdfjsLib.getDocument({ data: pdfData })
+              const pdfDoc = await loadingTask.promise
+              
+              const numPages = pdfDoc.numPages
+              console.log(`PDF Pages: ${numPages}`)
+              
+              let fullText = ''
+              
+              // Extract text from each page
+              for (let pageNum = 1; pageNum <= numPages; pageNum++) {
+                const page = await pdfDoc.getPage(pageNum)
+                const textContent = await page.getTextContent()
+                
+                // Build text from items
+                const pageText = textContent.items
+                  .map(item => item.str)
+                  .join(' ')
+                
+                if (pageText.trim()) {
+                  fullText += `\n--- Page ${pageNum} ---\n${pageText}\n`
+                }
+              }
+              
+              console.log(`PDF Text Length: ${fullText.length} characters`)
+              console.log('PDF Text Preview:', fullText.substring(0, 500))
+              
+              userContent += `\n\n=== PDF Document: ${file.name} ===\n`
+              userContent += `Total Pages: ${numPages}\n`
+              
+              if (fullText.trim().length > 50) {
+                userContent += `\n--- Extracted Content ---\n`
+                userContent += fullText
+                userContent += `\n--- End of ${file.name} ---\n`
+              } else {
+                // If still no text, it's probably a scanned PDF
+                console.log('PDF appears to be scanned or image-based')
+                userContent += `\n[WARNING: This PDF appears to be a scanned document or contains only images.]\n`
+                userContent += `[No readable text could be extracted from the ${numPages} pages.]\n`
+                userContent += `[For scanned documents, please:\n`
+                userContent += `  1. Convert the PDF pages to images and upload them, OR\n`
+                userContent += `  2. Use OCR software to extract the text first, OR\n`
+                userContent += `  3. Manually describe the key points from the document]\n`
+              }
+              
             } catch (error) {
-              console.error('Error processing text file:', error)
+              console.error('Error processing PDF:', error)
+              userContent += `\n\n[Error extracting text from PDF "${file.name}": ${error.message}]\n`
+              
+              // If pdfjs fails, it's likely an image PDF - suggest converting to images
+              userContent += `[This appears to be a scanned or image-based PDF.]\n`
+              userContent += `[Please convert it to images for analysis with GPT-4 Vision.]\n`
             }
-          } else if (file.type === 'text/csv' || file.type === 'application/vnd.ms-excel' || 
-                     file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
-                     file.name.endsWith('.csv')) {
-            // Process CSV files
+            
+          } else if (file.type === 'text/csv' || file.name.endsWith('.csv')) {
             try {
               const base64Data = file.content.split(',')[1]
               const csvContent = Buffer.from(base64Data, 'base64').toString('utf-8')
-              userContent += `\n\nCSV Data from ${file.name}:\n${csvContent}\n\nPlease analyze this spreadsheet data in the context of the real estate deal.`
+              userContent += `\n\nCSV Data from ${file.name}:\n${csvContent}\n`
             } catch (error) {
-              console.error('Error processing CSV file:', error)
-              userContent += `\n\n[Note: CSV file "${file.name}" was uploaded but could not be processed.]`
+              console.error('Error processing CSV:', error)
             }
-          } else if (file.type === 'application/pdf') {
-            userContent += `\n\n[Note: PDF file "${file.name}" was uploaded. For analysis, please copy and paste the relevant text content.]`
+            
+          } else if (file.type === 'text/plain') {
+            try {
+              const base64Data = file.content.split(',')[1]
+              const textContent = Buffer.from(base64Data, 'base64').toString('utf-8')
+              userContent += `\n\nContent of ${file.name}:\n${textContent}\n`
+            } catch (error) {
+              console.error('Error processing text file:', error)
+            }
           }
-        })
+        }
       }
       
-      // Add context from previous messages (last 3 exchanges)
+      // Log what we're sending to OpenAI
+      console.log('=== CONTENT BEING SENT TO AI ===')
+      console.log(userContent.substring(0, 1000))
+      console.log('=== END CONTENT PREVIEW ===')
+      
+      // Use GPT-4 for better document analysis if we have files
+      if (files && files.length > 0) {
+        model = "gpt-4-turbo-preview"
+      }
+      
+      // Build message array with context
       apiMessages = [
         { role: "system", content: systemMessage }
       ]
       
-      const previousMessages = messages.slice(-7, -1)
+      // Add some previous context if available
+      const previousMessages = messages.slice(-5, -1)
       previousMessages.forEach(msg => {
         if (msg.role === 'user' || msg.role === 'assistant') {
           apiMessages.push({
@@ -175,76 +229,61 @@ Be specific about numbers and calculations when relevant.`
     }
     
     console.log(`Using model: ${model}`)
-    console.log(`Number of messages: ${apiMessages.length}`)
+    console.log(`Message count: ${apiMessages.length}`)
     
     // Make the API call
-    const completion = await openai.chat.completions.create({
-      model: model,
-      messages: apiMessages,
-      max_tokens: hasImages ? 4096 : 2000,
-      temperature: 0.7
-    })
-
-    return {
-      status: "success",
-      message: {
-        role: "assistant",
-        content: completion.choices[0].message.content,
+    try {
+      const completion = await openai.chat.completions.create({
+        model: model,
+        messages: apiMessages,
+        max_tokens: 3000,
+        temperature: 0.7
+      })
+      
+      return {
+        status: "success",
+        message: {
+          role: "assistant",
+          content: completion.choices[0].message.content,
+        }
       }
+    } catch (apiError) {
+      console.error("OpenAI API Error:", apiError)
+      
+      // Fallback to GPT-3.5 if GPT-4 fails
+      if (apiError.status === 404 || apiError.message?.includes('model')) {
+        console.log("Falling back to GPT-3.5-turbo...")
+        
+        const fallbackCompletion = await openai.chat.completions.create({
+          model: "gpt-3.5-turbo",
+          messages: apiMessages.map(msg => {
+            if (Array.isArray(msg.content)) {
+              return {
+                ...msg,
+                content: msg.content.find(c => c.type === 'text')?.text || "Please analyze this content."
+              }
+            }
+            return msg
+          }),
+          max_tokens: 2000,
+          temperature: 0.7
+        })
+        
+        return {
+          status: "success",
+          message: {
+            role: "assistant",
+            content: fallbackCompletion.choices[0].message.content + "\n\n[Note: Using GPT-3.5. For better document analysis, ensure GPT-4 access.]",
+          }
+        }
+      }
+      
+      throw apiError
     }
     
   } catch (error) {
     console.error("AI Chat API Error:", error)
-    
-    if (error.response) {
-      console.error("OpenAI API Response:", error.response.status)
-      console.error("Error details:", error.response.data)
-      
-      // Check for specific errors
-      const errorMessage = error.response.data?.error?.message || ""
-      
-      if (errorMessage.includes("model") || error.response.status === 404) {
-        // Model not available - fallback to basic model
-        console.log("Model not available, falling back to gpt-3.5-turbo...")
-        
-        // Retry with basic model
-        try {
-          const config = useRuntimeConfig()
-          const openai = new OpenAI({ apiKey: config.openaiApiKey })
-          const body = await readBody(event)
-          const { messages, property } = body
-          const lastUserMessage = messages.findLast(m => m.role === 'user')
-          
-          const fallbackMessages = [
-            { 
-              role: "system", 
-              content: `You are a real estate investment advisor. ${createPropertyContext(property)}`
-            },
-            { 
-              role: "user", 
-              content: lastUserMessage.content + "\n\n[Note: File uploads are not supported with the current model. Please describe the content you'd like analyzed.]"
-            }
-          ]
-          
-          const completion = await openai.chat.completions.create({
-            model: "gpt-3.5-turbo",
-            messages: fallbackMessages,
-            max_tokens: 2000,
-            temperature: 0.7
-          })
-          
-          return {
-            status: "success",
-            message: {
-              role: "assistant",
-              content: completion.choices[0].message.content + "\n\n[Note: Image analysis requires GPT-4 Vision capabilities. Please ensure you have access to gpt-4o or gpt-4-turbo models.]",
-            }
-          }
-        } catch (fallbackError) {
-          console.error("Fallback also failed:", fallbackError)
-        }
-      }
-    }
+    console.error("Error details:", error.response?.data || error.message)
     
     throw createError({
       statusCode: 500,
@@ -255,7 +294,7 @@ Be specific about numbers and calculations when relevant.`
 
 // Helper function to format property information
 function createPropertyContext(property) {
-  if (!property || !property.inputs) return ""
+  if (!property || !property.inputs) return "No property data provided."
   
   const inputs = property.inputs || {}
   const calculations = property.calculations || {}
@@ -270,9 +309,16 @@ function createPropertyContext(property) {
     }).format(amount)
   }
   
-  return `
-Property: ${inputs.propertyAddress || 'Not specified'}
-Price: ${formatCurrency(inputs.purchasePrice)}
-Rent: ${formatCurrency(inputs.grossMonthlyRent)}/month
-Cash Flow: ${formatCurrency(calculations.monthlyCashFlow)}/month`
+  const details = []
+  
+  if (inputs.propertyAddress) details.push(`Property: ${inputs.propertyAddress}`)
+  if (inputs.purchasePrice) details.push(`Purchase Price: ${formatCurrency(inputs.purchasePrice)}`)
+  if (inputs.grossMonthlyRent) details.push(`Monthly Rent: ${formatCurrency(inputs.grossMonthlyRent)}`)
+  if (inputs.monthlyExpenses) details.push(`Monthly Expenses: ${formatCurrency(inputs.monthlyExpenses)}`)
+  if (calculations.monthlyNOI) details.push(`Monthly NOI: ${formatCurrency(calculations.monthlyNOI)}`)
+  if (calculations.monthlyCashFlow) details.push(`Cash Flow: ${formatCurrency(calculations.monthlyCashFlow)}/month`)
+  if (calculations.dscrLoanAmount) details.push(`DSCR Loan: ${formatCurrency(calculations.dscrLoanAmount)}`)
+  if (calculations.sellerCarryAmount) details.push(`Seller Financing: ${formatCurrency(calculations.sellerCarryAmount)}`)
+  
+  return details.length > 0 ? details.join('\n') : "No property data provided."
 }
