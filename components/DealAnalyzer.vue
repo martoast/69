@@ -639,16 +639,23 @@ const formatNumber = (value) => {
 
 // Form inputs
 const inputs = ref({
-  propertyAddress: "2900 W Flagler St, Miami, FL 33135",
-  purchasePrice: 3600000,
-  grossMonthlyRent: 18339,
+  propertyAddress: null,
+  agentName: null,
+  sellerName: null,
+  agentEmail: null,
+  agentPhone: null,
+  buyerName: null,
+  buyerEmail: null,
+  buyerPhone: null,
+  purchasePrice: null,
+  grossMonthlyRent: null,
   monthlyExpenses: 0,
-  dscrInterestRate: 7.5,
-  dscrLTV: 75,
-  sellerFinanceRate: 5,
+  dscrInterestRate: null,
+  dscrLTV: null,
+  sellerFinanceRate: null,
   amortizationYears: 30,
-  downPaymentToSeller: 340000,  // Corrected from 2,340,000
-  balloonYears: 7,
+  downPaymentToSeller: null,
+  balloonYears: null,
   paymentType: "Interest Only",
   closingFeePercent: 4,
   llcName: "Orbius Capital Group LLC"

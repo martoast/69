@@ -135,7 +135,7 @@
             ref="fileInput"
             type="file"
             multiple
-            accept="image/*,.pdf,.doc,.docx,.txt"
+            accept="image/*,.pdf,.doc,.docx,.txt,.csv,.xlsx,.xls"
             @change="handleFileSelect"
             class="hidden"
           />

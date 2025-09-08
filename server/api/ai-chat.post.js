@@ -3,7 +3,7 @@ import { OpenAI } from 'openai'
 
 export default defineEventHandler(async (event) => {
   // Only allow POST requests
-  if (getMethod(event) !== 'POST') {
+  if (event.method !== 'POST') {
     throw createError({
       statusCode: 405,
       statusMessage: 'Method Not Allowed'
@@ -134,6 +134,18 @@ Be specific about numbers and calculations when relevant.`
               userContent += `\n\nContent of ${file.name}:\n${textContent}`
             } catch (error) {
               console.error('Error processing text file:', error)
+            }
+          } else if (file.type === 'text/csv' || file.type === 'application/vnd.ms-excel' || 
+                     file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
+                     file.name.endsWith('.csv')) {
+            // Process CSV files
+            try {
+              const base64Data = file.content.split(',')[1]
+              const csvContent = Buffer.from(base64Data, 'base64').toString('utf-8')
+              userContent += `\n\nCSV Data from ${file.name}:\n${csvContent}\n\nPlease analyze this spreadsheet data in the context of the real estate deal.`
+            } catch (error) {
+              console.error('Error processing CSV file:', error)
+              userContent += `\n\n[Note: CSV file "${file.name}" was uploaded but could not be processed.]`
             }
           } else if (file.type === 'application/pdf') {
             userContent += `\n\n[Note: PDF file "${file.name}" was uploaded. For analysis, please copy and paste the relevant text content.]`
