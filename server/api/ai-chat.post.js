@@ -1,9 +1,6 @@
 // server/api/ai-chat.post.js
 import { OpenAI } from 'openai'
-import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs'
-
-// Set the worker source to use CDN - this works in production!
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/legacy/build/pdf.worker.min.js`
+import { extractText } from 'unpdf'
 
 export default defineEventHandler(async (event) => {
   // Only allow POST requests
@@ -122,48 +119,28 @@ IMPORTANT: When a user uploads a scanned PDF (detected when text extraction fail
           if (file.type === 'application/pdf') {
             try {
               const base64Data = file.content.split(',')[1]
-              const pdfData = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0))
+              const pdfBuffer = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0))
               
               console.log(`Processing PDF: ${file.name}`)
               
-              // Load the PDF document
-              const loadingTask = pdfjsLib.getDocument({ data: pdfData })
-              const pdfDoc = await loadingTask.promise
+              // Extract text using unpdf - much simpler!
+              const { totalPages, text } = await extractText(pdfBuffer, { mergePages: true })
               
-              const numPages = pdfDoc.numPages
-              console.log(`PDF Pages: ${numPages}`)
+              console.log(`PDF Pages: ${totalPages}`)
+              console.log(`PDF Text Length: ${text.length} characters`)
+              console.log('PDF Text Preview:', text.substring(0, 500))
               
-              let fullText = ''
-              
-              // Extract text from each page
-              for (let pageNum = 1; pageNum <= numPages; pageNum++) {
-                const page = await pdfDoc.getPage(pageNum)
-                const textContent = await page.getTextContent()
-                
-                // Build text from items
-                const pageText = textContent.items
-                  .map(item => item.str)
-                  .join(' ')
-                
-                if (pageText.trim()) {
-                  fullText += `\n--- Page ${pageNum} ---\n${pageText}\n`
-                }
-              }
-              
-              console.log(`PDF Text Length: ${fullText.length} characters`)
-              console.log('PDF Text Preview:', fullText.substring(0, 500))
-              
-              if (fullText.trim().length > 200) {
+              if (text.trim().length > 200) {
                 // We have enough text, it's a real text PDF
                 userContent += `\n\n=== PDF Document: ${file.name} ===\n`
-                userContent += `Total Pages: ${numPages}\n`
+                userContent += `Total Pages: ${totalPages}\n`
                 userContent += `\n--- Extracted Content ---\n`
-                userContent += fullText
+                userContent += text
                 userContent += `\n--- End of ${file.name} ---\n`
               } else {
                 // This is a scanned PDF - tell the AI to explain it to the user
                 console.log('PDF appears to be scanned or image-based')
-                userContent = `The user uploaded a PDF file "${file.name}" with ${numPages} pages, but it's a SCANNED PDF (image-based, not text-based). Only ${fullText.trim().length} characters could be extracted, which means it's essentially photos of documents rather than actual text.
+                userContent = `The user uploaded a PDF file "${file.name}" with ${totalPages} pages, but it's a SCANNED PDF (image-based, not text-based). Only ${text.trim().length} characters could be extracted, which means it's essentially photos of documents rather than actual text.
 
 Please explain to the user that:
 1. Their PDF is a scanned document (like a photo of paper)

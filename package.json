@@ -20,9 +20,11 @@
     "@tailwindcss/typography": "^0.5.16",
     "nuxt": "^4.0.3",
     "openai": "^5.16.0",
-    "pdfjs-dist": "^5.4.149",
     "vue": "^3.5.20",
     "vue-router": "^4.5.1"
   },
-  "packageManager": "yarn@1.22.19+sha1.4ba7fc5c6e704fce2066ecbfb0b0d8976fe62447"
+  "packageManager": "yarn@1.22.19+sha1.4ba7fc5c6e704fce2066ecbfb0b0d8976fe62447",
+  "devDependencies": {
+    "unpdf": "^1.2.2"
+  }
 }
