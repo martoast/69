@@ -160,29 +160,84 @@
                   placeholder="3600000"
                 />
               </div>
+
               <div>
                 <label class="block text-sm font-medium text-gray-300 mb-2"
-                  >Gross Monthly Rent ($)</label
+                  >Monthly Expenses ($)</label
+                >
+                <input
+                  v-model.number="inputs.monthlyExpenses"
+                  type="number"
+                  class="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-yellow-gold focus:border-transparent"
+                  placeholder="0"
+                />
+              </div>
+              
+            </div>
+
+            <div class="grid grid-cols-1 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2"
+                  >Annual Gross Rent ($)</label
+                >
+                <input
+                  v-model.number="inputs.annualGrossRent"
+                  type="number"
+                  class="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-yellow-gold focus:border-transparent"
+                  placeholder="220068"
+                  @input="updateMonthlyRent"
+                />
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2"
+                  >Gross Monthly Rent ($)
+                  <span class="text-xs text-gray-400">- Auto-calculated</span>
+                </label
                 >
                 <input
                   v-model.number="inputs.grossMonthlyRent"
                   type="number"
                   class="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-yellow-gold focus:border-transparent"
                   placeholder="18339"
+                  @input="updateAnnualRent"
                 />
               </div>
+              
             </div>
 
-            <div>
-              <label class="block text-sm font-medium text-gray-300 mb-2"
-                >Monthly Expenses ($)</label
-              >
-              <input
-                v-model.number="inputs.monthlyExpenses"
-                type="number"
-                class="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-yellow-gold focus:border-transparent"
-                placeholder="0"
-              />
+            <!-- Down Payment Section with Percentage -->
+            <div class="bg-gray-800/30 rounded-lg p-4 border border-gray-700">
+              <h4 class="text-sm font-semibold text-gray-300 mb-3">Down Payment Configuration</h4>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-300 mb-2"
+                    >Down Payment (%)</label
+                  >
+                  <input
+                    v-model.number="inputs.downPaymentPercent"
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    max="100"
+                    class="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-yellow-gold focus:border-transparent"
+                    placeholder="65"
+                    @input="updateDownPaymentAmount"
+                  />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-300 mb-2"
+                    >Down Payment ($)</label
+                  >
+                  <input
+                    v-model.number="inputs.downPaymentToSeller"
+                    type="number"
+                    class="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-yellow-gold focus:border-transparent"
+                    placeholder="2340000"
+                    @input="updateDownPaymentPercent"
+                  />
+                </div>
+              </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -240,17 +295,6 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label class="block text-sm font-medium text-gray-300 mb-2"
-                  >Down Payment to Seller ($)</label
-                >
-                <input
-                  v-model.number="inputs.downPaymentToSeller"
-                  type="number"
-                  class="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-yellow-gold focus:border-transparent"
-                  placeholder="2340000"
-                />
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-300 mb-2"
                   >Balloon (Years)</label
                 >
                 <input
@@ -260,37 +304,52 @@
                   placeholder="7"
                 />
               </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2"
+                  >Payment Type</label
+                >
+                <select
+                  v-model="inputs.paymentType"
+                  class="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-yellow-gold focus:border-transparent"
+                >
+                  <option value="Interest Only">Interest Only</option>
+                  <option value="Principal Only">Principal Only</option>
+                  <option value="Principal and Interest">
+                    Principal and Interest
+                  </option>
+                </select>
+              </div>
             </div>
 
-            <!-- Editable Closing Fee -->
-            <div>
-              <label class="block text-sm font-medium text-gray-300 mb-2">
-                Closing Fees + Agent (%)
-                <span class="text-xs text-gray-400">- Default is 4%</span>
-              </label>
-              <input
-                v-model.number="inputs.closingFeePercent"
-                type="number"
-                step="0.1"
-                class="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-yellow-gold focus:border-transparent"
-                placeholder="4.0"
-              />
-            </div>
-
-            <div>
-              <label class="block text-sm font-medium text-gray-300 mb-2"
-                >Payment Type</label
-              >
-              <select
-                v-model="inputs.paymentType"
-                class="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-yellow-gold focus:border-transparent"
-              >
-                <option value="Interest Only">Interest Only</option>
-                <option value="Principal Only">Principal Only</option>
-                <option value="Principal and Interest">
-                  Principal and Interest
-                </option>
-              </select>
+            <!-- Fee Configuration Section -->
+            <div class="bg-gray-800/30 rounded-lg p-4 border border-gray-700">
+              <h4 class="text-sm font-semibold text-gray-300 mb-3">Fee Configuration</h4>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-300 mb-2">
+                    Closing Fees + Agent (%)
+                  </label>
+                  <input
+                    v-model.number="inputs.closingFeePercent"
+                    type="number"
+                    step="0.1"
+                    class="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-yellow-gold focus:border-transparent"
+                    placeholder="4.0"
+                  />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-300 mb-2">
+                    Assignment Fee (%)
+                  </label>
+                  <input
+                    v-model.number="inputs.assignmentFeePercent"
+                    type="number"
+                    step="0.1"
+                    class="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-yellow-gold focus:border-transparent"
+                    placeholder="6.0"
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -604,7 +663,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import LOIGenerator from './LOIGenerator.vue';
 import SMSTemplateGenerator from './SMSTemplateGenerator.vue';
 import EmailTemplateGenerator from './EmailTemplateGenerator.vue';
@@ -637,7 +696,7 @@ const formatNumber = (value) => {
   });
 }
 
-// Form inputs
+// Form inputs - UPDATED WITH NEW FIELDS
 const inputs = ref({
   propertyAddress: null,
   agentName: null,
@@ -648,22 +707,59 @@ const inputs = ref({
   buyerEmail: null,
   buyerPhone: null,
   purchasePrice: null,
+  annualGrossRent: null, // NEW FIELD
   grossMonthlyRent: null,
   monthlyExpenses: 0,
   dscrInterestRate: 7.5,
   dscrLTV: 75,
   sellerFinanceRate: 5.0,
   amortizationYears: 30,
+  downPaymentPercent: null, // NEW FIELD
   downPaymentToSeller: null,
   balloonYears: 7,
   paymentType: "Interest Only",
   closingFeePercent: 4,
+  assignmentFeePercent: 6, // NEW FIELD with default 6%
   llcName: "Orbius Capital Group LLC"
 })
 
+// Helper functions to sync annual/monthly rent
+const updateMonthlyRent = () => {
+  if (inputs.value.annualGrossRent) {
+    inputs.value.grossMonthlyRent = Math.round(inputs.value.annualGrossRent / 12);
+  }
+}
 
+const updateAnnualRent = () => {
+  if (inputs.value.grossMonthlyRent) {
+    inputs.value.annualGrossRent = inputs.value.grossMonthlyRent * 12;
+  }
+}
 
-// Calculations - PROPERLY FIXED
+// Helper functions to sync down payment percentage and amount
+const updateDownPaymentAmount = () => {
+  if (inputs.value.downPaymentPercent !== null && inputs.value.purchasePrice) {
+    inputs.value.downPaymentToSeller = Math.round(
+      (inputs.value.downPaymentPercent / 100) * inputs.value.purchasePrice
+    );
+  }
+}
+
+const updateDownPaymentPercent = () => {
+  if (inputs.value.downPaymentToSeller !== null && inputs.value.purchasePrice) {
+    inputs.value.downPaymentPercent = 
+      (inputs.value.downPaymentToSeller / inputs.value.purchasePrice) * 100;
+  }
+}
+
+// Watch for purchase price changes to update down payment amount
+watch(() => inputs.value.purchasePrice, () => {
+  if (inputs.value.downPaymentPercent !== null) {
+    updateDownPaymentAmount();
+  }
+});
+
+// Calculations - UPDATED WITH PROPER SELLER FINANCING
 const calculations = computed(() => {
   const purchasePrice = inputs.value.purchasePrice || 0;
   const grossMonthlyRent = inputs.value.grossMonthlyRent || 0;
@@ -675,6 +771,7 @@ const calculations = computed(() => {
   const downPaymentToSeller = inputs.value.downPaymentToSeller || 0;
   const paymentType = inputs.value.paymentType || "Interest Only";
   const closingFeePercent = (inputs.value.closingFeePercent || 4) / 100;
+  const assignmentFeePercent = (inputs.value.assignmentFeePercent || 6) / 100; // Use dynamic assignment fee
 
   // Monthly NOI
   const monthlyNOI = grossMonthlyRent - monthlyExpenses;
@@ -687,12 +784,8 @@ const calculations = computed(() => {
     ? PMT(dscrInterestRate / 12, amortizationYears * 12, dscrLoanAmount)
     : 0;
 
-  // CRITICAL: Calculate what's left after DSCR loan
-  const remainingAfterDSCR = purchasePrice - dscrLoanAmount;
-  
-  // The seller carry is what's left after the down payment
-  // But it can't be negative!
-  const sellerCarryAmount = Math.max(0, remainingAfterDSCR - downPaymentToSeller);
+  // FIXED: Seller carry amount is simply Purchase Price - Down Payment
+  const sellerCarryAmount = Math.max(0, purchasePrice - downPaymentToSeller);
 
   // Seller carry monthly payment
   let sellerCarryPayment = 0;
@@ -722,7 +815,7 @@ const calculations = computed(() => {
   // Other calculations
   const emd = purchasePrice * 0.01;
   const closingFees = purchasePrice * closingFeePercent;
-  const assignmentFee = purchasePrice * 0.03;
+  const assignmentFee = purchasePrice * assignmentFeePercent; // Use dynamic percentage
   const netToBuyer = dscrLoanAmount - downPaymentToSeller - closingFees - assignmentFee;
   const netCashToSeller = downPaymentToSeller;
 
